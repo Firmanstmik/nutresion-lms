@@ -1,17 +1,11 @@
 @extends('layouts.app')
 
-@section('content')
-
-{{-- Google Fonts --}}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-
-<div class="nrs-root">
-
+@section('hero')
+<div class="nrs-root" style="padding-top: 0.5px;">
     {{-- ═══════════════════════════════════════════════════════════════
          HERO SECTION — Completely Unchanged
     ═══════════════════════════════════════════════════════════════ --}}
-    <div class="relative overflow-visible -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 sm:-mt-10 mb-12">
+    <div class="relative overflow-visible mb-6">
         <div class="hero-img-box relative h-[170px] sm:h-[260px] lg:h-[320px] w-full rounded-t-none rounded-b-3xl overflow-hidden shadow-2xl shadow-gray-200/60 border border-gray-100 ring-1 ring-black/5">
             <img src="{{ route('brand.hero') }}" alt="Hero" class="absolute inset-0 w-full h-full object-cover object-center">
             <div class="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent"></div>
@@ -92,7 +86,16 @@
             </div>
         </div>
     </div>
+</div>
+@endsection
 
+@section('content')
+
+{{-- Google Fonts --}}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;600&swap" rel="stylesheet">
+
+<div class="nrs-root">
     {{-- ═══════════════════════════════════════════════════════════════
          KPI STRIP — Three Key Stats
     ═══════════════════════════════════════════════════════════════ --}}

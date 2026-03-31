@@ -1,15 +1,7 @@
 @extends('layouts.app')
 
-@section('content')
-
-{{-- Google Fonts --}}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-
-<div class="nrm-root" 
-     data-total-results="{{ $stats['results'] ?? 0 }}" 
-     data-recent-scores="{{ json_encode($recentResults->pluck('score')) }}">
-
+@section('hero')
+<div class="nrm-root" style="padding-top: 0.5px;">
     {{-- ═══════════════════════════════════════════════════════════════
          HEADER BAND — National Identity Strip
     ═══════════════════════════════════════════════════════════════ --}}
@@ -82,7 +74,19 @@
             </div>
         </div>
     </div>
+</div>
+@endsection
 
+@section('content')
+
+{{-- Google Fonts --}}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&swap" rel="stylesheet">
+
+<div class="nrm-root" 
+     style="margin-top: -24px;"
+     data-total-results="{{ $stats['results'] ?? 0 }}" 
+     data-recent-scores="{{ json_encode($recentResults->pluck('score')) }}">
     {{-- ═══════════════════════════════════════════════════════════════
          KPI STRIP — Four Key Metrics
     ═══════════════════════════════════════════════════════════════ --}}
