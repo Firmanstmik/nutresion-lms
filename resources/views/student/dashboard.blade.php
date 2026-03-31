@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('hero')
-<div class="nrs-root" style="padding-top: 0.5px;">
+<div class="nrs-root" style="padding-top: 12px;">
     {{-- ═══════════════════════════════════════════════════════════════
          HERO SECTION — Completely Unchanged
     ═══════════════════════════════════════════════════════════════ --}}

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('hero')
-<div class="nrm-root" style="padding-top: 0.5px;">
+<div class="nrm-root" style="padding-top: 12px;">
     {{-- ═══════════════════════════════════════════════════════════════
          HEADER BAND — National Identity Strip
     ═══════════════════════════════════════════════════════════════ --}}
