@@ -570,6 +570,18 @@
                     <textarea name="description" rows="3" class="cp-input" placeholder="Deskripsi materi"></textarea>
                 </div>
                 <div class="cp-field">
+                    <label class="cp-label">Tipe Kursus</label>
+                    <select name="course_type_id" required class="cp-input">
+                        @foreach($courseTypes as $type)
+                            <option value="{{ $type->id }}">{{ $type->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="cp-field">
+                    <label class="cp-label">Label (Opsional)</label>
+                    <input type="text" name="label" class="cp-input" placeholder="Contoh: Terpopuler, Baru, dll.">
+                </div>
+                <div class="cp-field">
                     <label class="cp-label">Target Sekolah</label>
                     <select name="school_id" class="cp-input">
                         <option value="">Semua Sekolah (Umum)</option>
@@ -580,7 +592,8 @@
                 </div>
                 <div class="cp-field">
                     <label class="cp-label">Thumbnail</label>
-                    <input type="file" name="thumbnail" class="cp-input" style="padding:0.4rem">
+                    <input type="file" name="thumbnail" accept="image/*" class="cp-input" style="padding:0.4rem" onchange="checkFileSize(this)">
+                    <small id="fileSizeError" style="color:var(--c-red); font-size:0.6rem; display:none;">File terlalu besar (Maksimal 5MB)</small>
                 </div>
             </form>
         </div>
@@ -632,7 +645,8 @@
                 </div>
                 <div class="cp-field">
                     <label class="cp-label">Thumbnail Baru</label>
-                    <input type="file" name="thumbnail" class="cp-input" style="padding:0.4rem">
+                    <input type="file" name="thumbnail" accept="image/*" class="cp-input" style="padding:0.4rem" onchange="checkFileSizeEdit(this)">
+                    <small id="fileSizeErrorEdit" style="color:var(--c-red); font-size:0.6rem; display:none;">File terlalu besar (Maksimal 5MB)</small>
                 </div>
             </form>
         </div>
@@ -645,6 +659,42 @@
 <script>
 function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
 function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
+
+function checkFileSize(input) {
+    const errorMsg = document.getElementById('fileSizeError');
+    const submitBtn = document.querySelector('button[form="addForm"]');
+    
+    if (input.files && input.files[0]) {
+        const fileSize = input.files[0].size / 1024 / 1024; // in MB
+        if (fileSize > 5) {
+            errorMsg.style.display = 'block';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+        } else {
+            errorMsg.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+        }
+    }
+}
+
+function checkFileSizeEdit(input) {
+    const errorMsg = document.getElementById('fileSizeErrorEdit');
+    const submitBtn = document.querySelector('button[form="editForm"]');
+    
+    if (input.files && input.files[0]) {
+        const fileSize = input.files[0].size / 1024 / 1024; // in MB
+        if (fileSize > 5) {
+            errorMsg.style.display = 'block';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+        } else {
+            errorMsg.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+        }
+    }
+}
 
 function editCourse(btn) {
     const modal = document.getElementById('editModal');
