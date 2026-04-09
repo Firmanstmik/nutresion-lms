@@ -12,8 +12,26 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    {{-- Hotwire Turbo & NProgress for Smooth Navigation --}}
+    <script src="https://unpkg.com/@hotwired/turbo@8.0.0/dist/turbo.es2017-umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css">
 
     <style>
+        /* ── NProgress Custom Style ──────────────────── */
+        #nprogress .bar {
+            background: var(--nav-gold) !important;
+            height: 3px !important;
+        }
+        #nprogress .spinner-icon {
+            border-top-color: var(--nav-gold) !important;
+            border-left-color: var(--nav-gold) !important;
+        }
+        #nprogress .peg {
+            box-shadow: 0 0 10px var(--nav-gold), 0 0 5px var(--nav-gold) !important;
+        }
+
         /* ── Root tokens ─────────────────────────────── */
         :root {
             --nav-navy:      #0B1E3F;
@@ -1266,19 +1284,31 @@
 @endauth
 
 {{-- ════════════════════════════════════════════════════
-     SCRIPTS — unchanged logic + clock
+     SCRIPTS — Turbo + NProgress + UI Logic
 ════════════════════════════════════════════════════ --}}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+// NProgress configuration
+if (typeof NProgress !== 'undefined') {
+    NProgress.configure({ 
+        showSpinner: false,
+        trickleSpeed: 200,
+        minimum: 0.1
+    });
 
-    /* ── Page loader ─────────────────────────────── */
+    document.addEventListener('turbo:click', () => NProgress.start());
+    document.addEventListener('turbo:visit', () => NProgress.start());
+    document.addEventListener('turbo:submit-start', () => NProgress.start());
+    document.addEventListener('turbo:load', () => NProgress.done());
+    document.addEventListener('turbo:render', () => NProgress.done());
+}
+
+document.addEventListener('turbo:load', () => {
+
+    /* ── Page loader (Fallback) ─────────────────── */
     const loader = document.getElementById('nrLoader');
-    if (loader && loader.style.display === 'flex') {
-        requestAnimationFrame(() => {
-            loader.classList.add('opacity-0');
-            window.setTimeout(() => { loader.style.display = 'none'; }, 500);
-        });
-        try { sessionStorage.setItem('nrmlms_loaded', '1'); } catch (e) {}
+    if (loader) {
+        loader.classList.add('opacity-0');
+        window.setTimeout(() => { loader.style.display = 'none'; }, 500);
     }
 
     /* ── Dropdown helpers ────────────────────────── */
