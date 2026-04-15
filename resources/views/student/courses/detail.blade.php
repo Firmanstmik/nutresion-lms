@@ -48,9 +48,9 @@
                         <img src="https://i.pravatar.cc/100?u=1" class="nrd-avatar" alt="">
                         <img src="https://i.pravatar.cc/100?u=2" class="nrd-avatar" alt="">
                         <img src="https://i.pravatar.cc/100?u=3" class="nrd-avatar" alt="">
-                        <div class="nrd-avatar nrd-avatar-count">+1.2k</div>
+                        <div class="nrd-avatar nrd-avatar-count">+{{ number_format(max(0, (int) $student_count - 3)) }}</div>
                     </div>
-                    <span class="nrd-proof-text">Bergabung dengan 1,200+ siswa lainnya</span>
+                    <span class="nrd-proof-text">Bergabung dengan {{ number_format((int) $student_count) }} siswa lainnya</span>
                 </div>
 
             </div>
@@ -64,9 +64,6 @@
                         alt="{{ $course->title }}"
                     >
                     <div class="nrd-thumb-overlay"></div>
-                    <div class="nrd-play-btn" aria-hidden="true">
-                        <i class="fas fa-play"></i>
-                    </div>
                 </div>
             </div>
 
@@ -87,13 +84,9 @@
                     <i class="fas fa-list-ul"></i>
                     Kurikulum
                 </button>
-                <button class="nrd-tab">
-                    <i class="fas fa-info-circle"></i>
-                    Tentang Materi
-                </button>
-                <button class="nrd-tab">
+                <button class="nrd-tab" type="button" id="nrd-students-btn">
                     <i class="fas fa-users"></i>
-                    Siswa (1.2k)
+                    Siswa ({{ number_format((int) $student_count) }})
                 </button>
             </div>
 
@@ -329,6 +322,37 @@
 
 </div>{{-- end nrd-root --}}
 
+<div id="nrd-students-modal" class="nrd-modal-backdrop" style="display:none;">
+    <div class="nrd-modal">
+        <div class="nrd-modal-head">
+            <div class="nrd-modal-title-wrap">
+                <div class="nrd-modal-eyebrow">DAFTAR SISWA</div>
+                <div class="nrd-modal-title">{{ number_format((int) $student_count) }} Siswa Terdaftar</div>
+            </div>
+            <button type="button" class="nrd-modal-close" id="nrd-students-close" aria-label="Tutup">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="nrd-modal-body">
+            <div class="nrd-modal-search">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="text" id="nrd-students-search" placeholder="Cari nama atau sekolah..." autocomplete="off">
+            </div>
+            <div class="nrd-students-list" id="nrd-students-list">
+                @foreach($students as $s)
+                    <div class="nrd-student-row" data-search="{{ strtolower($s->name . ' ' . ($s->school->name ?? '')) }}">
+                        <div class="nrd-student-avatar">{{ strtoupper(mb_substr($s->name, 0, 1)) }}</div>
+                        <div class="nrd-student-info">
+                            <div class="nrd-student-name">{{ $s->name }}</div>
+                            <div class="nrd-student-school">{{ $s->school->name ?? 'Institusi Umum' }}</div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+
 
 {{-- ═══════════════════════════════════════════════════════════════
      STYLES
@@ -509,9 +533,9 @@
     aspect-ratio: 16/9;
     border-radius: 18px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.18);
     background: rgba(255,255,255,0.06);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    box-shadow: 0 26px 70px rgba(0,0,0,0.35);
     cursor: pointer;
 }
 .nrd-thumb-img {
@@ -523,28 +547,18 @@
 .nrd-thumb-card:hover .nrd-thumb-img { opacity: 1; transform: scale(1.05); }
 .nrd-thumb-overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.35), transparent 60%);
+    background:
+        radial-gradient(70% 60% at 40% 30%, rgba(74,222,128,0.16), rgba(74,222,128,0) 60%),
+        linear-gradient(to top, rgba(0,0,0,0.46), transparent 60%);
     pointer-events: none;
 }
-.nrd-play-btn {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
+.nrd-thumb-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
     pointer-events: none;
-}
-.nrd-play-btn i {
-    width: 68px; height: 68px;
-    background: rgba(255,255,255,0.95);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem;
-    color: var(--nrd-green);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    padding-left: 4px;
-}
-.nrd-thumb-card:hover .nrd-play-btn i {
-    transform: scale(1.12);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
 }
 
 /* ════════════════════════════════════════════════════
@@ -946,6 +960,187 @@
     0%, 100% { box-shadow: none; }
     50% { box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
 }
+
+.nrd-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.nrd-modal {
+    width: 100%;
+    max-width: 720px;
+    max-height: min(76vh, 720px);
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.32);
+    display: flex;
+    flex-direction: column;
+}
+.nrd-modal-head {
+    padding: 1.1rem 1.25rem;
+    background: linear-gradient(135deg, #0D5C34, #0A3D21);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.nrd-modal-eyebrow {
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+}
+.nrd-modal-title {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.01em;
+}
+.nrd-modal-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.nrd-modal-close:hover {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+}
+.nrd-modal-body {
+    padding: 1rem 1.25rem 1.25rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+.nrd-modal-search {
+    position: relative;
+}
+.nrd-modal-search i {
+    position: absolute;
+    top: 50%;
+    left: 0.9rem;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: rgba(107,114,128,0.8);
+}
+.nrd-modal-search input {
+    width: 100%;
+    border: 1px solid rgba(229,231,235,1);
+    border-radius: 14px;
+    padding: 0.75rem 0.9rem 0.75rem 2.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    outline: none;
+}
+.nrd-modal-search input:focus {
+    border-color: rgba(30,145,82,0.4);
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.18);
+}
+.nrd-students-list {
+    overflow: auto;
+    padding-right: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.nrd-student-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid rgba(229,231,235,1);
+    border-radius: 16px;
+    background: #fff;
+    transition: all 0.2s ease;
+}
+.nrd-student-row:hover {
+    border-color: rgba(30,145,82,0.28);
+    box-shadow: 0 10px 26px rgba(13,92,52,0.1);
+    transform: translateY(-1px);
+}
+.nrd-student-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: rgba(13,92,52,0.08);
+    border: 1px solid rgba(13,92,52,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    color: var(--nrd-green);
+    flex-shrink: 0;
+}
+.nrd-student-name {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--nrd-ink);
+    line-height: 1.2;
+}
+.nrd-student-school {
+    margin-top: 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(107,114,128,0.85);
+    letter-spacing: 0.02em;
+}
 </style>
+
+<script>
+(function () {
+    const btn = document.getElementById('nrd-students-btn');
+    const modal = document.getElementById('nrd-students-modal');
+    const closeBtn = document.getElementById('nrd-students-close');
+    const search = document.getElementById('nrd-students-search');
+    const list = document.getElementById('nrd-students-list');
+
+    function open() {
+        if (!modal) return;
+        modal.style.display = 'flex';
+        if (search) {
+            search.value = '';
+            setTimeout(() => search.focus(), 0);
+        }
+        filter('');
+    }
+
+    function close() {
+        if (!modal) return;
+        modal.style.display = 'none';
+    }
+
+    function filter(q) {
+        if (!list) return;
+        const query = (q || '').toLowerCase().trim();
+        const items = list.querySelectorAll('.nrd-student-row');
+        items.forEach((el) => {
+            const hay = el.getAttribute('data-search') || '';
+            el.style.display = hay.includes(query) ? '' : 'none';
+        });
+    }
+
+    if (btn) btn.addEventListener('click', open);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    if (search) search.addEventListener('input', () => filter(search.value));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+})();
+</script>
 
 @endsection

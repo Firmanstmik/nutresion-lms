@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="space-y-12 max-w-4xl mx-auto py-12">
-    <div class="bg-white rounded-[4rem] p-12 sm:p-24 text-center shadow-2xl shadow-gray-200 border border-gray-100 relative overflow-hidden group">
+<div class="space-y-10 max-w-5xl mx-auto py-8 sm:py-12 px-4 sm:px-6">
+    <div class="bg-white rounded-[3rem] sm:rounded-[4rem] p-10 sm:p-20 text-center shadow-2xl shadow-gray-200 border border-gray-100 relative overflow-hidden group">
         <div class="absolute -top-10 -left-10 w-48 h-48 bg-teal-50 rounded-full blur-3xl opacity-50 transition-all group-hover:scale-150"></div>
         <div class="absolute -bottom-10 -right-10 w-48 h-48 bg-blue-50 rounded-full blur-3xl opacity-50 transition-all group-hover:scale-150"></div>
         
@@ -16,7 +16,7 @@
                 <h1 class="text-4xl sm:text-6xl font-black text-gray-900 leading-tight tracking-tight">{{ $result->course->title }}</h1>
             </div>
 
-            <div class="p-10 bg-gray-50 rounded-[3.5rem] border border-gray-100 shadow-inner flex flex-col items-center justify-center gap-6 relative group/score overflow-hidden">
+            <div class="p-8 sm:p-10 bg-gray-50 rounded-[2.5rem] sm:rounded-[3.5rem] border border-gray-100 shadow-inner flex flex-col items-center justify-center gap-6 relative group/score overflow-hidden">
                 <div class="absolute inset-0 bg-white/50 backdrop-blur-xl opacity-0 group-hover/score:opacity-100 transition-all"></div>
                 <div class="relative z-10 flex flex-col items-center">
                     <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Skor Akhir Anda</p>
@@ -46,6 +46,121 @@
                         <p class="text-sm font-bold text-red-600">Pelajari kembali materi dan coba lagi di pelatihan berikutnya.</p>
                     </div>
                 </div>
+                @endif
+            </div>
+
+            @php
+                $answers = $result->answers ?? collect();
+                $hasDetail = $answers->count() > 0;
+                $correctCount = $hasDetail ? $answers->where('is_correct', true)->count() : 0;
+                $answeredCount = $hasDetail ? $answers->whereNotNull('selected_answer')->count() : 0;
+                $unansweredCount = $hasDetail ? ($answers->count() - $answeredCount) : 0;
+            @endphp
+
+            <div class="space-y-6">
+                <div class="bg-white/60 border border-gray-100 rounded-[2.5rem] p-6 sm:p-8 text-left shadow-xl shadow-gray-200/40">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Rincian Jawaban</h3>
+                    <p class="mt-2 text-sm font-bold text-gray-600 leading-relaxed">
+                        @if($hasDetail)
+                            Benar: <span class="text-emerald-700 font-extrabold">{{ $correctCount }}</span>
+                            <span class="mx-2 text-gray-300">·</span>
+                            Terjawab: <span class="text-gray-900 font-extrabold">{{ $answeredCount }}</span>
+                            <span class="mx-2 text-gray-300">·</span>
+                            Kosong: <span class="text-gray-900 font-extrabold">{{ $unansweredCount }}</span>
+                        @else
+                            Detail jawaban belum tersedia untuk hasil ini.
+                        @endif
+                    </p>
+                    @if($hasDetail)
+                        <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="rounded-3xl border border-emerald-100 bg-emerald-50 px-5 py-4">
+                                <div class="text-[10px] font-black uppercase tracking-widest text-emerald-700">Benar</div>
+                                <div class="mt-1 text-2xl font-black text-emerald-900">{{ $correctCount }}</div>
+                            </div>
+                            <div class="rounded-3xl border border-red-100 bg-red-50 px-5 py-4">
+                                <div class="text-[10px] font-black uppercase tracking-widest text-red-700">Salah</div>
+                                <div class="mt-1 text-2xl font-black text-red-900">{{ max(0, $answers->count() - $correctCount - $unansweredCount) }}</div>
+                            </div>
+                            <div class="rounded-3xl border border-gray-100 bg-gray-50 px-5 py-4">
+                                <div class="text-[10px] font-black uppercase tracking-widest text-gray-600">Kosong</div>
+                                <div class="mt-1 text-2xl font-black text-gray-900">{{ $unansweredCount }}</div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                @if($hasDetail)
+                    <div class="space-y-4">
+                        @foreach($answers as $idx => $answer)
+                            @php
+                                $q = $answer->question;
+                                $selected = $answer->selected_answer;
+                                $correct = $q?->correct_answer;
+                                $isCorrect = (bool) $answer->is_correct;
+                            @endphp
+
+                            <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/60 overflow-hidden">
+                                <div class="p-6 sm:p-8 flex flex-col gap-5">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black shadow-lg {{ $isCorrect ? 'bg-emerald-600 shadow-emerald-100' : 'bg-red-500 shadow-red-100' }}">
+                                            {{ $idx + 1 }}
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="text-base sm:text-lg font-extrabold text-gray-900 leading-snug">
+                                                {{ $q?->question ?? 'Soal tidak ditemukan' }}
+                                            </div>
+                                            <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-black uppercase tracking-widest">
+                                                <span class="px-3 py-2 rounded-2xl border {{ $isCorrect ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700' }}">
+                                                    {{ $isCorrect ? 'Benar' : 'Salah' }}
+                                                </span>
+                                                <span class="px-3 py-2 rounded-2xl bg-gray-50 border border-gray-100 text-gray-600">
+                                                    Jawaban: <span class="text-gray-900">{{ $selected ?? '—' }}</span>
+                                                </span>
+                                                <span class="px-3 py-2 rounded-2xl bg-gray-50 border border-gray-100 text-gray-600">
+                                                    Kunci: <span class="text-gray-900">{{ $correct ?? '—' }}</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if($q)
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            @foreach(['A','B','C','D'] as $opt)
+                                                @php
+                                                    $optText = $q->{'option_' . strtolower($opt)};
+                                                    $isKey = $correct === $opt;
+                                                    $isPick = $selected === $opt;
+                                                    $border = 'border-gray-100';
+                                                    $bg = 'bg-gray-50';
+                                                    $text = 'text-gray-700';
+
+                                                    if ($isKey) {
+                                                        $border = 'border-emerald-200';
+                                                        $bg = 'bg-emerald-50';
+                                                        $text = 'text-emerald-900';
+                                                    } elseif ($isPick) {
+                                                        $border = 'border-red-200';
+                                                        $bg = 'bg-red-50';
+                                                        $text = 'text-red-900';
+                                                    }
+                                                @endphp
+                                                <div class="p-4 rounded-2xl border {{ $border }} {{ $bg }}">
+                                                    <div class="flex items-start gap-3">
+                                                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-black {{ $isKey ? 'bg-emerald-600 text-white' : ($isPick ? 'bg-red-500 text-white' : 'bg-white text-gray-900 border border-gray-200') }}">
+                                                            {{ $opt }}
+                                                        </div>
+                                                        <div class="text-sm font-bold leading-relaxed {{ $text }}">
+                                                            {{ $optText }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 @endif
             </div>
 

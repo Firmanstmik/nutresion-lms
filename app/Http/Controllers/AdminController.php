@@ -387,6 +387,21 @@ class AdminController extends Controller
         return back()->with('success', 'Lesson deleted successfully');
     }
 
+    public function uploadLessonImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+        ]);
+
+        $path = $request->file('image')->store('lesson_images', 'public');
+        $url = asset('storage/'.$path);
+
+        return response()->json([
+            'url' => $url,
+            'path' => $path,
+        ]);
+    }
+
     // Question Management
     public function questions($course_id)
     {
@@ -472,7 +487,7 @@ class AdminController extends Controller
     // Result Monitoring
     public function results()
     {
-        $results = Result::with(['user', 'course'])->latest()->get();
+        $results = Result::with(['user.school', 'course'])->latest()->get();
 
         return view('admin.results.index', compact('results'));
     }

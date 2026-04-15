@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Notification;
 use App\Models\Result;
+use App\Models\User;
 use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -100,9 +101,17 @@ class CourseController extends Controller
                 ->exists()
             : true; // No pretest → treat as "done" so lessons are freely accessible
 
+        $students = User::query()
+            ->where('role', 'student')
+            ->with('school:id,name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'username', 'school_id']);
+        $student_count = $students->count();
+
         return view('student.courses.detail', compact(
             'course', 'progress', 'all_completed', 'has_post_test',
-            'has_pre_test', 'pre_test_done'
+            'has_pre_test', 'pre_test_done',
+            'students', 'student_count'
         ));
     }
 }

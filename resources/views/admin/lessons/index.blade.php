@@ -232,6 +232,28 @@
 .cp-btn-edit:hover { color: var(--c-teal); border-color: var(--c-teal); background: rgba(15,126,110,0.04); }
 .cp-btn-del:hover  { color: var(--c-red);  border-color: var(--c-red);  background: rgba(192,17,30,0.04); }
 
+.cp-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 2px;
+    border: 1px solid rgba(11, 30, 63, 0.12);
+    background: rgba(11, 30, 63, 0.04);
+    color: var(--c-navy);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.cp-upload-btn:hover {
+    background: rgba(15, 126, 110, 0.08);
+    border-color: rgba(15, 126, 110, 0.25);
+    color: var(--c-teal);
+}
+
 /* ── Mobile Cards ─────────────────────────────── */
 .cp-mobile-grid { display: none; flex-direction: column; gap: 1.25rem; }
 .cp-m-card {
@@ -465,8 +487,15 @@
                     <input type="url" name="video_url" class="cp-input" placeholder="https://youtube.com/...">
                 </div>
                 <div class="cp-field" style="margin-top:1.25rem;">
-                    <label class="cp-label">Isi Materi</label>
-                    <textarea name="content" rows="6" class="cp-input" placeholder="Tuliskan materi di sini..."></textarea>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem;">
+                        <label class="cp-label" style="margin:0;">Isi Materi</label>
+                        <button type="button" class="cp-upload-btn" onclick="openLessonImagePicker('addLessonImage')">
+                            <i class="fas fa-image"></i>
+                            Upload Gambar
+                        </button>
+                    </div>
+                    <textarea name="content" id="addContent" rows="6" class="cp-input" placeholder="Tuliskan materi di sini... (bisa pakai HTML, contoh: &lt;img src=&quot;...&quot; /&gt;)"></textarea>
+                    <input type="file" id="addLessonImage" accept="image/*" style="display:none" onchange="uploadLessonImageAndInsert(this, 'addContent')">
                 </div>
             </form>
         </div>
@@ -500,8 +529,15 @@
                     <input type="url" name="video_url" id="editVideoUrl" class="cp-input">
                 </div>
                 <div class="cp-field" style="margin-top:1.25rem;">
-                    <label class="cp-label">Isi Materi</label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem;">
+                        <label class="cp-label" style="margin:0;">Isi Materi</label>
+                        <button type="button" class="cp-upload-btn" onclick="openLessonImagePicker('editLessonImage')">
+                            <i class="fas fa-image"></i>
+                            Upload Gambar
+                        </button>
+                    </div>
                     <textarea name="content" id="editContent" rows="6" class="cp-input"></textarea>
+                    <input type="file" id="editLessonImage" accept="image/*" style="display:none" onchange="uploadLessonImageAndInsert(this, 'editContent')">
                 </div>
             </form>
         </div>
@@ -511,9 +547,68 @@
     </div>
 </div>
 
+<div id="lessonUploadConfig" data-upload-url="{{ route('admin.lessons.upload-image') }}" style="display:none"></div>
+
 <script>
 function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
 function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
+
+function openLessonImagePicker(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) input.click();
+}
+
+function insertAtCursor(textarea, text) {
+    if (!textarea) return;
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? textarea.value.length;
+    const before = textarea.value.slice(0, start);
+    const after = textarea.value.slice(end);
+    textarea.value = before + text + after;
+    const nextPos = start + text.length;
+    textarea.selectionStart = nextPos;
+    textarea.selectionEnd = nextPos;
+    textarea.focus();
+}
+
+async function uploadLessonImageAndInsert(fileInput, textareaId) {
+    const file = fileInput?.files?.[0];
+    const textarea = document.getElementById(textareaId);
+    if (!file) return;
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const uploadUrl = document.getElementById('lessonUploadConfig')?.dataset?.uploadUrl || '';
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const res = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+            },
+            body: formData,
+        });
+
+        if (!res.ok) {
+            throw new Error('Upload gagal');
+        }
+
+        const data = await res.json();
+        const url = data?.url;
+        if (!url) {
+            throw new Error('URL gambar tidak ditemukan');
+        }
+
+        const html = '\n<img src="' + url + '" alt="" style="max-width:100%;height:auto;border-radius:16px;margin:12px 0;" />\n';
+        insertAtCursor(textarea, html);
+        fileInput.value = '';
+    } catch (e) {
+        fileInput.value = '';
+        alert('Gagal upload gambar. Silakan coba lagi.');
+    }
+}
 
 function editLesson(btn) {
     const modal = document.getElementById('editModal');

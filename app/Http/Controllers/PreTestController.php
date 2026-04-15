@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Notification;
 use App\Models\Result;
+use App\Models\ResultAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -56,18 +57,30 @@ class PreTestController extends Controller
                 ->with('error', 'Anda sudah mengambil Pretest ini.');
         }
 
-        $score = 0;
         $questions = $course->preQuestions;
         $total_questions = $questions->count();
 
+        $correct_count = 0;
+        $answer_rows = [];
+        $now = now();
+
         foreach ($questions as $question) {
             $answer_key = 'question_'.$question->id;
-            if ($request->has($answer_key) && $request->input($answer_key) === $question->correct_answer) {
-                $score++;
+            $selected = $request->input($answer_key);
+            $is_correct = $selected !== null && $selected === $question->correct_answer;
+            if ($is_correct) {
+                $correct_count++;
             }
+            $answer_rows[] = [
+                'question_id' => $question->id,
+                'selected_answer' => $selected,
+                'is_correct' => $is_correct,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
 
-        $final_score = $total_questions > 0 ? ($score / $total_questions) * 100 : 0;
+        $final_score = $total_questions > 0 ? ($correct_count / $total_questions) * 100 : 0;
         $rounded_score = round($final_score);
 
         $result = Result::create([
@@ -76,6 +89,14 @@ class PreTestController extends Controller
             'score' => $rounded_score,
             'type' => 'pre',
         ]);
+
+        if (count($answer_rows) > 0) {
+            foreach ($answer_rows as &$row) {
+                $row['result_id'] = $result->id;
+            }
+            unset($row);
+            ResultAnswer::insert($answer_rows);
+        }
 
         // Notifikasi
         Notification::create([

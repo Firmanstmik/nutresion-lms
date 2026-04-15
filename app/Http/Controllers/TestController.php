@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Notification;
 use App\Models\Result;
+use App\Models\ResultAnswer;
 use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,18 +55,30 @@ class TestController extends Controller
             return redirect()->route('courses.detail', $course_id)->with('error', 'Anda sudah mengambil test ini.');
         }
 
-        $score = 0;
         $questions = $course->postQuestions;
         $total_questions = $questions->count();
 
+        $correct_count = 0;
+        $answer_rows = [];
+        $now = now();
+
         foreach ($questions as $question) {
             $answer_key = 'question_'.$question->id;
-            if ($request->has($answer_key) && $request->input($answer_key) === $question->correct_answer) {
-                $score++;
+            $selected = $request->input($answer_key);
+            $is_correct = $selected !== null && $selected === $question->correct_answer;
+            if ($is_correct) {
+                $correct_count++;
             }
+            $answer_rows[] = [
+                'question_id' => $question->id,
+                'selected_answer' => $selected,
+                'is_correct' => $is_correct,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
 
-        $final_score = $total_questions > 0 ? ($score / $total_questions) * 100 : 0;
+        $final_score = $total_questions > 0 ? ($correct_count / $total_questions) * 100 : 0;
         $rounded_score = round($final_score);
 
         $result = Result::create([
@@ -74,6 +87,14 @@ class TestController extends Controller
             'score' => $rounded_score,
             'type' => 'post',
         ]);
+
+        if (count($answer_rows) > 0) {
+            foreach ($answer_rows as &$row) {
+                $row['result_id'] = $result->id;
+            }
+            unset($row);
+            ResultAnswer::insert($answer_rows);
+        }
 
         // Create Notification for Result
         Notification::create([
@@ -90,7 +111,7 @@ class TestController extends Controller
 
     public function result($id)
     {
-        $result = Result::with('course')->findOrFail($id);
+        $result = Result::with(['course', 'answers.question'])->findOrFail($id);
         if ($result->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
             abort(403);
         }

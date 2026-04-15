@@ -20,4 +20,9 @@ class Result extends Model
     {
         return $this->belongsTo(Course::class);
     }
+
+    public function answers()
+    {
+        return $this->hasMany(ResultAnswer::class);
+    }
 }

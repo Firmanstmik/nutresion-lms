@@ -98,6 +98,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/courses/{course_id}/lessons', [AdminController::class, 'storeLesson'])->name('lessons.store');
     Route::put('/lessons/{id}', [AdminController::class, 'updateLesson'])->name('lessons.update');
     Route::delete('/lessons/{id}', [AdminController::class, 'destroyLesson'])->name('lessons.destroy');
+    Route::post('/lessons/upload-image', [AdminController::class, 'uploadLessonImage'])->name('lessons.upload-image');
 
     // Question Management
     Route::get('/courses/{course_id}/questions', [AdminController::class, 'questions'])->name('questions.index');

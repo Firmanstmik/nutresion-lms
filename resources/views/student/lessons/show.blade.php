@@ -74,8 +74,12 @@
             </div>
 
             <div class="p-7 sm:p-10 lg:p-12">
+                @php
+                    $lessonContent = $lesson->content ?? '';
+                    $hasHtml = \Illuminate\Support\Str::contains($lessonContent, ['<img', '<p', '<br', '<div', '<h', '<ul', '<ol', '<table']);
+                @endphp
                 <div class="text-text-secondary text-sm sm:text-base leading-relaxed font-medium space-y-6 nrl-lesson-content">
-                    {!! nl2br(e($lesson->content)) !!}
+                    {!! $hasHtml ? $lessonContent : nl2br(e($lessonContent)) !!}
                 </div>
 
                 <div class="mt-10 pt-8 border-t border-border-soft flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -107,5 +111,6 @@
 
 <style>
 .nrl-lesson-content br { display: block; content: ""; margin-top: 0.85rem; }
+.nrl-lesson-content img { max-width: 100%; height: auto; border-radius: 18px; }
 </style>
 @endsection

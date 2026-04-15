@@ -7,10 +7,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 @php
-    $totalResults = $results->count();
-    $passCount    = $results->where('score', '>=', 70)->count();
-    $avgScore     = $totalResults > 0 ? (int) round($results->avg('score')) : 0;
-    $bestScore    = $totalResults > 0 ? (int) $results->max('score') : 0;
+    $allResults = collect();
+    if (isset($preResults)) {
+        $allResults = $allResults->merge($preResults);
+    }
+    if (isset($postResults)) {
+        $allResults = $allResults->merge($postResults);
+    }
+    if ($allResults->count() === 0) {
+        $allResults = $results;
+    }
+
+    $totalResults = $allResults->count();
+    $passCount    = $allResults->where('score', '>=', 70)->count();
+    $avgScore     = $totalResults > 0 ? (int) round($allResults->avg('score')) : 0;
+    $bestScore    = $totalResults > 0 ? (int) $allResults->max('score') : 0;
     $passRate     = $totalResults > 0 ? (int) round(($passCount / $totalResults) * 100) : 0;
 @endphp
 
@@ -223,12 +234,15 @@
                 @php
                     $pass    = $result->score >= 70;
                     $s       = (int) $result->score;
-                    $grade   = $s >= 90 ? 'A' : ($s >= 80 ? 'B' : ($s >= 70 ? 'C' : ($s >= 60 ? 'D' : 'E')));
-                    $gradeColor = $s >= 70 ? 'rs-grade-pass' : 'rs-grade-fail';
+                    $thumb = $result->course->thumbnail
+                        ? asset('storage/' . $result->course->thumbnail)
+                        : 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=600&auto=format&fit=crop';
                 @endphp
                 <div class="rs-row" style="--i: {{ $i }}">
                     <div class="rs-grade-col">
-                        <div class="rs-grade {{ $gradeColor }}">{{ $grade }}</div>
+                        <div class="rs-thumb" title="{{ $result->course->title }}">
+                            <img src="{{ $thumb }}" alt="{{ $result->course->title }}" class="rs-thumb-img" loading="lazy">
+                        </div>
                     </div>
                     <div class="rs-info-col">
                         <div class="rs-row-meta">
@@ -275,15 +289,17 @@
                 @php
                     $pass    = $result->score >= 70;
                     $s       = (int) $result->score;
-                    $grade   = $s >= 90 ? 'A' : ($s >= 80 ? 'B' : ($s >= 70 ? 'C' : ($s >= 60 ? 'D' : 'E')));
-                    $gradeColor = $s >= 70 ? 'rs-grade-pass' : 'rs-grade-fail';
+                    $thumb = $result->course->thumbnail
+                        ? asset('storage/' . $result->course->thumbnail)
+                        : 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=600&auto=format&fit=crop';
                 @endphp
 
                 <div class="rs-row {{ $pass ? '' : 'rs-row-fail' }}" style="--i: {{ $i }}">
 
-                    {{-- Grade badge --}}
                     <div class="rs-grade-col">
-                        <div class="rs-grade {{ $gradeColor }}">{{ $grade }}</div>
+                        <div class="rs-thumb" title="{{ $result->course->title }}">
+                            <img src="{{ $thumb }}" alt="{{ $result->course->title }}" class="rs-thumb-img" loading="lazy">
+                        </div>
                     </div>
 
                     {{-- Info --}}
@@ -918,26 +934,21 @@
 
 /* Grade badge */
 .rs-grade-col { display: flex; justify-content: center; }
-.rs-grade {
-    width: 40px; height: 40px;
+.rs-thumb {
+    width: 44px;
+    height: 44px;
     border-radius: var(--r-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    font-weight: 900;
-    letter-spacing: -0.02em;
+    overflow: hidden;
+    border: 1px solid rgba(12, 26, 18, 0.08);
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: var(--s1);
     flex-shrink: 0;
 }
-.rs-grade-pass {
-    background: var(--g50);
-    color: var(--g600);
-    border: 1.5px solid var(--g100);
-}
-.rs-grade-fail {
-    background: #FFF1F2;
-    color: #B91C1C;
-    border: 1.5px solid #FECDD3;
+.rs-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 /* Info column */

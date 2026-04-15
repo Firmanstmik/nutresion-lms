@@ -280,6 +280,46 @@ tr:last-child .sp-td { border-bottom: none; }
 .sp-status-pass { background: var(--s-teal); color: white; }
 .sp-status-fail { background: var(--s-red); color: white; }
 
+.sp-type-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 100px;
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.sp-type-pre {
+    background: rgba(217, 119, 6, 0.1);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    color: #B45309;
+}
+.sp-type-post {
+    background: rgba(15, 126, 110, 0.1);
+    border: 1px solid rgba(15, 126, 110, 0.2);
+    color: var(--s-teal);
+}
+.sp-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--s-border);
+    border-radius: 2px;
+    background: var(--s-white);
+    color: var(--s-muted);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.sp-action-link:hover {
+    border-color: rgba(15, 126, 110, 0.25);
+    background: rgba(15, 126, 110, 0.05);
+    color: var(--s-teal);
+}
+
 /* Search Input */
 .sp-search-wrap {
     position: relative;
@@ -324,7 +364,7 @@ tr:last-child .sp-td { border-bottom: none; }
                 Monitoring Akademis
             </div>
             <h1 class="sp-header-title">
-                Hasil <em>Post-Test</em><br>Siswa Nasional
+                Hasil <em>Pre & Post Test</em><br>Siswa Nasional
             </h1>
             <p class="sp-header-sub">
                 Pantau capaian pembelajaran dan evaluasi pemahaman gizi dari seluruh peserta didik.
@@ -386,9 +426,10 @@ tr:last-child .sp-td { border-bottom: none; }
                         <th class="sp-th" style="width: 60px;">No</th>
                         <th class="sp-th">Peserta</th>
                         <th class="sp-th">Materi Kursus</th>
+                        <th class="sp-th" style="width: 140px;">Jenis Test</th>
                         <th class="sp-th">Capaian Skor</th>
                         <th class="sp-th">Waktu Selesai</th>
-                        <th class="sp-th" style="text-align: right;">Status</th>
+                        <th class="sp-th" style="text-align: right;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -410,6 +451,12 @@ tr:last-child .sp-td { border-bottom: none; }
                             <div style="font-size: 0.78rem; font-weight: 600; color: var(--s-muted);">{{ $result->course->title }}</div>
                         </td>
                         <td class="sp-td">
+                            <span class="sp-type-chip {{ $result->type === 'pre' ? 'sp-type-pre' : 'sp-type-post' }}">
+                                <i class="fas {{ $result->type === 'pre' ? 'fa-clipboard-list' : 'fa-trophy' }}" style="font-size:0.6rem;"></i>
+                                {{ $result->type === 'pre' ? 'Pre Test' : 'Post Test' }}
+                            </span>
+                        </td>
+                        <td class="sp-td">
                             <div class="sp-score-badge {{ $result->score >= 70 ? 'sp-score-pass' : 'sp-score-fail' }}">
                                 {{ $result->score }}
                             </div>
@@ -419,14 +466,14 @@ tr:last-child .sp-td { border-bottom: none; }
                             <span style="display: block; font-size: 0.6rem; opacity: 0.6;">{{ $result->created_at->format('H:i') }} WITA</span>
                         </td>
                         <td class="sp-td" style="text-align: right;">
-                            <span class="sp-status-chip {{ $result->score >= 70 ? 'sp-status-pass' : 'sp-status-fail' }}">
-                                {{ $result->score >= 70 ? 'Lulus' : 'Gagal' }}
-                            </span>
+                            <a class="sp-action-link" href="{{ route('results.show', $result->id) }}" title="Lihat Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" style="padding: 4rem; text-align: center;">
+                        <td colspan="7" style="padding: 4rem; text-align: center;">
                             <div style="font-size: 0.72rem; font-weight: 600; color: var(--s-muted); text-transform: uppercase; letter-spacing: 0.1em;">
                                 Belum ada data hasil test yang tersedia.
                             </div>
