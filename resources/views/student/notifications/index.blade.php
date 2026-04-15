@@ -237,20 +237,26 @@
                         </div>
                         <h4 class="ntf-item-title">{{ $notif->title }}</h4>
                         <p class="ntf-item-msg">{{ $notif->message }}</p>
-                        @if($notif->action_url)
-                            <a href="{{ route('notifications.read', $notif->id) }}" class="ntf-item-cta">
-                                <span>
-                                    @if($notif->type === 'course')
-                                        Lanjutkan Belajar
-                                    @elseif($notif->type === 'result')
-                                        Lihat Nilai
-                                    @else
-                                        Lihat Detail
-                                    @endif
-                                </span>
-                                <i class="fas fa-arrow-right"></i>
+                        <div class="ntf-actions">
+                            <a href="{{ route('notifications.show', $notif->id) }}" class="ntf-item-cta ntf-item-cta-ghost">
+                                <span>Detail</span>
+                                <i class="fas fa-eye"></i>
                             </a>
-                        @endif
+                            @if($notif->action_url)
+                                <a href="{{ route('notifications.read', $notif->id) }}" class="ntf-item-cta">
+                                    <span>
+                                        @if($notif->type === 'course')
+                                            Lanjutkan Belajar
+                                        @elseif($notif->type === 'result')
+                                            Lihat Nilai
+                                        @else
+                                            Lihat Detail
+                                        @endif
+                                    </span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                            @endif
+                        </div>
                     </div>
 
                 </article>
@@ -939,6 +945,29 @@
 }
 .ntf-item-cta:hover { color: var(--g600); }
 .ntf-item-cta:hover .fas { transform: translateX(3px); }
+
+.ntf-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+.ntf-item-cta { margin-top: 0; }
+.ntf-item-cta-ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid rgba(229,231,235,1);
+    padding: 0.45rem 0.7rem;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+.ntf-item-cta-ghost:hover {
+    background: rgba(13,92,52,0.06);
+    border-color: rgba(13,92,52,0.18);
+    color: var(--g600);
+}
 
 /* ╔══════════════════════════════════════════════════════════════════
    ║  EMPTY STATE

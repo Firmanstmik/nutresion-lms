@@ -948,6 +948,14 @@
                    class="nrn-link {{ request()->routeIs('results.*') ? 'nrn-active-student' : '' }}">
                     Nilai
                 </a>
+                <a href="{{ route('notifications.index') }}"
+                   class="nrn-link {{ request()->routeIs('notifications.*') ? 'nrn-active-student' : '' }}"
+                   style="position:relative;">
+                    Notif
+                    @if(isset($unreadCount) && $unreadCount > 0)
+                        <span class="nrn-badge-num" style="position:static; margin-left:0.4rem; transform:none;">{{ $unreadCount }}</span>
+                    @endif
+                </a>
             @else
                 <a href="{{ route('admin.dashboard') }}"
                    class="nrn-link {{ request()->routeIs('admin.dashboard') ? 'nrn-active' : '' }}">
@@ -1070,7 +1078,7 @@
 
                         {{-- Real Notifications --}}
                         @forelse($studentNotifications as $notif)
-                        <a href="{{ $notif->action_url ? route('notifications.read', $notif->id) : '#' }}" class="nrn-lesson-card">
+                        <a href="{{ $notif->action_url ? route('notifications.read', $notif->id) : route('notifications.show', $notif->id) }}" class="nrn-lesson-card">
                             <div class="nrn-notif-icon-box {{ $notif->is_read ? 'nrn-notif-icon-box-read' : 'nrn-notif-icon-box-unread' }}">
                                 @if($notif->type == 'course') <i data-lucide="book-open" style="width: 18px; height: 18px;"></i>
                                 @elseif($notif->type == 'result') <i data-lucide="award" style="width: 18px; height: 18px;"></i>

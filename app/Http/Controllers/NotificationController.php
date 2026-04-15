@@ -55,6 +55,16 @@ class NotificationController extends Controller
         return view('student.notifications.index', compact('notifications'));
     }
 
+    public function show($id)
+    {
+        $notification = Notification::where('user_id', Auth::id())->findOrFail($id);
+        if (! $notification->is_read) {
+            $notification->update(['is_read' => true]);
+        }
+
+        return view('student.notifications.show', compact('notification'));
+    }
+
     public function read($id)
     {
         $notification = Notification::where('user_id', Auth::id())->findOrFail($id);
