@@ -641,8 +641,9 @@ class AdminController extends Controller
             }
 
             $totalCount = (int) $query->count();
-            $limit = 250;
+            $limit = 120;
 
+            @ini_set('memory_limit', '512M');
             set_time_limit(120);
             Storage::disk('local')->makeDirectory('dompdf');
 
@@ -665,12 +666,12 @@ class AdminController extends Controller
 
             $title = 'Laporan '.($type === 'pre' ? 'Pre Test' : 'Post Test');
             $html = '<!doctype html><html><head><meta charset="utf-8"><style>
-                body{font-family:DejaVu Sans, Arial, sans-serif;font-size:12px;color:#111827}
-                h1{font-size:16px;margin:0 0 10px}
+                body{font-family:DejaVu Sans, Arial, sans-serif;font-size:11px;color:#111827}
+                h1{font-size:14px;margin:0 0 8px}
                 table{width:100%;border-collapse:collapse}
-                th,td{border:1px solid #E5E7EB;padding:6px 8px;vertical-align:top}
+                th,td{border:1px solid #E5E7EB;padding:5px 6px;vertical-align:top}
                 th{background:#F3F4F6;font-weight:700}
-                .muted{color:#6B7280;font-size:11px;margin:0 0 12px}
+                .muted{color:#6B7280;font-size:10px;margin:0 0 10px}
             </style></head><body>';
             $html .= '<h1>'.$title.'</h1>';
             $html .= '<div class="muted">Diunduh: '.now()->format('d/m/Y H:i:s').'</div>';

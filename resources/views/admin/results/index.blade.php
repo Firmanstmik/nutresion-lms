@@ -696,7 +696,13 @@ tr:last-child .sp-td { border-bottom: none; }
 
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function () {
+function initAdminResultsPage() {
+    const chartHost = document.querySelector('#resultsChart');
+    if (!chartHost) return;
+    if (chartHost.dataset.inited === '1') return;
+    chartHost.dataset.inited = '1';
+
     // Search functionality
     const searchInput = document.getElementById('tableSearch');
     const table = document.getElementById('resultsTable');
@@ -775,6 +781,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
         yaxis: {
+            min: 0,
             max: 100,
             labels: {
                 style: {
@@ -808,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const chart = new ApexCharts(document.querySelector("#resultsChart"), options);
-    chart.render();
+    const renderPromise = chart.render();
 
     const trendUrl = document.getElementById('resultsTrendConfig')?.dataset?.url || '';
     const schoolFilterEl = document.getElementById('sp-school-filter');
@@ -817,6 +824,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statPassEl = document.getElementById('sp-stat-passrate');
     const statMaxEl = document.getElementById('sp-stat-max');
     const lastUpdatedEl = document.getElementById('sp-last-updated');
+    let pollId = null;
 
     function pad3(n) {
         return String(n ?? 0).padStart(3, '0');
@@ -834,8 +842,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const labels = Array.isArray(data?.labels) ? data.labels : [];
             const scores = Array.isArray(data?.scores) ? data.scores : [];
 
+            const numericScores = scores.filter((n) => typeof n === 'number' && !Number.isNaN(n));
+            const minScore = numericScores.length ? Math.min(...numericScores) : 0;
+            const yMin = Math.max(0, Math.floor(minScore / 10) * 10);
+
             chart.updateSeries([{ name: 'Skor Siswa', data: scores }], true);
-            chart.updateOptions({ xaxis: { categories: labels } }, false, true);
+            chart.updateOptions({ xaxis: { categories: labels }, yaxis: { min: yMin, max: 100 } }, false, true);
 
             const stats = data?.stats || {};
             if (statAvgEl) statAvgEl.textContent = pad3(stats.avg);
@@ -851,8 +863,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    refreshTrend();
-    setInterval(refreshTrend, 5000);
+    Promise.resolve(renderPromise).then(() => refreshTrend());
+    pollId = window.setInterval(refreshTrend, 5000);
 
     const preTrigger = document.getElementById('sp-export-pre-trigger');
     const preMenu = document.getElementById('sp-export-pre-menu');
@@ -925,7 +937,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeMenus();
     });
-});
+    document.addEventListener('turbo:before-cache', () => {
+        if (pollId) window.clearInterval(pollId);
+        try { chart.destroy(); } catch (e) {}
+        chartHost.dataset.inited = '0';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initAdminResultsPage);
+document.addEventListener('turbo:load', initAdminResultsPage);
+document.addEventListener('livewire:navigated', initAdminResultsPage);
+})();
 </script>
 
 @endsection
