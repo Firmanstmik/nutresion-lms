@@ -515,4 +515,11 @@ class AdminController extends Controller
 
         return view('admin.results.index', compact('results'));
     }
+
+    public function resultShow($id)
+    {
+        $result = Result::with(['course', 'user.school', 'answers.question'])->findOrFail($id);
+
+        return view('student.results.show', compact('result'));
+    }
 }

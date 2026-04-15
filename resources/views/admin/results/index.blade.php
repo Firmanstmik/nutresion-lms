@@ -466,7 +466,7 @@ tr:last-child .sp-td { border-bottom: none; }
                             <span style="display: block; font-size: 0.6rem; opacity: 0.6;">{{ $result->created_at->format('H:i') }} WITA</span>
                         </td>
                         <td class="sp-td" style="text-align: right;">
-                            <a class="sp-action-link" href="{{ route('results.show', $result->id) }}" title="Lihat Detail">
+                            <a class="sp-action-link" href="{{ route('admin.results.show', $result->id) }}" title="Lihat Detail">
                                 <i class="fas fa-eye"></i>
                             </a>
                         </td>

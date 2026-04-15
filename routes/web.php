@@ -111,4 +111,5 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Result Monitoring
     Route::get('/results', [AdminController::class, 'results'])->name('results.index');
+    Route::get('/results/{id}', [AdminController::class, 'resultShow'])->name('results.show');
 });

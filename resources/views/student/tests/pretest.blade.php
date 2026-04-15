@@ -158,12 +158,14 @@
     --pt-white:    #FFFFFF;
     --pt-red:      #DC2626;
     --pt-red-lt:   #FEE2E2;
+    --pt-nav-h:    60px;
+    --pt-timer-h:  56px;
 }
 
 /* ── Timer Bar ───────────────────────────────────────────────── */
 .pt-timer-bar {
     position: fixed;
-    top: 0; left: 0; right: 0;
+    top: var(--pt-nav-h); left: 0; right: 0;
     z-index: 9999;
     background: #0A3D21;
     border-bottom: 1px solid rgba(74,222,128,0.2);
@@ -249,13 +251,38 @@
 
 /* ── Header ─────────────────────────────────────────────────── */
 .pt-header {
-    background: linear-gradient(135deg, #0D5C34 0%, #0A3D21 100%);
-    padding: 5rem 1.25rem 2.5rem;
+    position: relative;
+    background:
+        radial-gradient(70% 60% at 12% 10%, rgba(74,222,128,0.22), rgba(74,222,128,0) 55%),
+        radial-gradient(60% 60% at 86% 20%, rgba(245,158,11,0.16), rgba(245,158,11,0) 62%),
+        linear-gradient(135deg, #0D5C34 0%, #0A3D21 100%);
+    padding: calc(4.25rem + var(--pt-timer-h)) 1.25rem 2.5rem;
     margin-bottom: 0;
+    overflow: hidden;
+}
+.pt-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 56px 56px;
+    opacity: 0.6;
+    pointer-events: none;
+}
+.pt-header::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: radial-gradient(60% 50% at 50% 0%, rgba(255,255,255,0.12), rgba(255,255,255,0) 60%);
+    pointer-events: none;
 }
 .pt-header-inner {
     max-width: 900px; margin: 0 auto;
     display: flex; flex-direction: column; gap: 1.25rem;
+    position: relative;
+    z-index: 1;
 }
 .pt-badge {
     display: inline-flex; align-items: center; gap: 0.4rem;

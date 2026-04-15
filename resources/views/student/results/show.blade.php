@@ -130,28 +130,68 @@
                                                     $optText = $q->{'option_' . strtolower($opt)};
                                                     $isKey = $correct === $opt;
                                                     $isPick = $selected === $opt;
-                                                    $border = 'border-gray-100';
-                                                    $bg = 'bg-gray-50';
-                                                    $text = 'text-gray-700';
-
+                                                    $state = 'default';
                                                     if ($isKey) {
-                                                        $border = 'border-emerald-200';
-                                                        $bg = 'bg-emerald-50';
-                                                        $text = 'text-emerald-900';
+                                                        $state = $isPick ? 'picked_key' : 'key';
                                                     } elseif ($isPick) {
-                                                        $border = 'border-red-200';
-                                                        $bg = 'bg-red-50';
-                                                        $text = 'text-red-900';
+                                                        $state = 'picked_wrong';
+                                                    }
+
+                                                    $wrap = 'border-gray-100 bg-white';
+                                                    $badge = 'bg-white text-gray-900 border border-gray-200';
+                                                    $optTextClass = 'text-gray-700';
+                                                    $meta = 'text-gray-500';
+                                                    $icon = null;
+
+                                                    if ($state === 'key') {
+                                                        $wrap = 'border-emerald-200 bg-emerald-50/40';
+                                                        $badge = 'bg-emerald-600 text-white';
+                                                        $optTextClass = 'text-emerald-950';
+                                                        $meta = 'text-emerald-700';
+                                                        $icon = 'fa-key';
+                                                    } elseif ($state === 'picked_wrong') {
+                                                        $wrap = 'border-red-200 bg-red-50/40';
+                                                        $badge = 'bg-red-500 text-white';
+                                                        $optTextClass = 'text-red-950';
+                                                        $meta = 'text-red-700';
+                                                        $icon = 'fa-xmark';
+                                                    } elseif ($state === 'picked_key') {
+                                                        $wrap = 'border-emerald-200 bg-emerald-50/40';
+                                                        $badge = 'bg-emerald-600 text-white';
+                                                        $optTextClass = 'text-emerald-950';
+                                                        $meta = 'text-emerald-700';
+                                                        $icon = 'fa-check';
                                                     }
                                                 @endphp
-                                                <div class="p-4 rounded-2xl border {{ $border }} {{ $bg }}">
-                                                    <div class="flex items-start gap-3">
-                                                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-black {{ $isKey ? 'bg-emerald-600 text-white' : ($isPick ? 'bg-red-500 text-white' : 'bg-white text-gray-900 border border-gray-200') }}">
+                                                <div class="p-4 sm:p-5 rounded-[2rem] border {{ $wrap }} shadow-sm">
+                                                    <div class="flex items-start gap-4">
+                                                        <div class="w-11 h-11 rounded-2xl flex items-center justify-center font-black {{ $badge }}">
                                                             {{ $opt }}
                                                         </div>
-                                                        <div class="text-sm font-bold leading-relaxed {{ $text }}">
-                                                            {{ $optText }}
+                                                        <div class="min-w-0 flex-1">
+                                                            <div class="text-sm sm:text-[15px] font-bold leading-relaxed {{ $optTextClass }}">
+                                                                {{ $optText }}
+                                                            </div>
+                                                            <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-black uppercase tracking-widest {{ $meta }}">
+                                                                @if($state === 'key' || $state === 'picked_key')
+                                                                    <span class="px-3 py-2 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 inline-flex items-center gap-2">
+                                                                        <i class="fas fa-key" style="font-size:0.65rem;"></i>
+                                                                        Kunci
+                                                                    </span>
+                                                                @endif
+                                                                @if($state === 'picked_wrong' || $state === 'picked_key')
+                                                                    <span class="px-3 py-2 rounded-2xl border {{ $state === 'picked_key' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-red-200 bg-red-50 text-red-800' }} inline-flex items-center gap-2">
+                                                                        <i class="fas {{ $state === 'picked_key' ? 'fa-check' : 'fa-xmark' }}" style="font-size:0.7rem;"></i>
+                                                                        Pilihanmu
+                                                                    </span>
+                                                                @endif
+                                                            </div>
                                                         </div>
+                                                        @if($icon)
+                                                            <div class="w-10 h-10 rounded-2xl flex items-center justify-center border {{ str_contains($wrap, 'emerald') ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : (str_contains($wrap, 'red') ? 'border-red-200 bg-red-50 text-red-700' : 'border-gray-200 bg-gray-50 text-gray-500') }}">
+                                                                <i class="fas {{ $icon }}"></i>
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             @endforeach
