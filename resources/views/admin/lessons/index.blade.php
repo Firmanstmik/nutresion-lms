@@ -278,10 +278,26 @@
     backdrop-filter: blur(6px);
     z-index: 100;
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: center;
+    padding-top: 84px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
 }
-@media (min-width: 640px) { .cp-modal-backdrop { align-items: center; padding: 1.5rem; } }
+@media (min-width: 640px) {
+    .cp-modal-backdrop {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+}
+@media (max-width: 639px) {
+    .cp-modal-backdrop {
+        align-items: flex-start;
+        padding-top: 84px;
+    }
+    .cp-modal { max-height: calc(100vh - 84px); border-radius: 2px; }
+}
 .cp-modal-backdrop.hidden { display: none; }
 
 .cp-modal {
@@ -301,8 +317,30 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    gap: 0.75rem;
 }
 .cp-modal-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: white; }
+.cp-modal-actions { display: inline-flex; align-items: center; gap: 0.6rem; }
+.cp-modal-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 2px;
+    background: rgba(15,126,110,0.95);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.cp-modal-save:hover { background: rgba(20,168,143,0.95); }
 .cp-modal-close {
     width: 32px; height: 32px;
     background: rgba(255,255,255,0.08);
@@ -316,6 +354,7 @@
 }
 
 .cp-modal-body { padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
+.cp-modal-body { flex: 1; }
 .cp-field { display: flex; flex-direction: column; gap: 0.4rem; }
 .cp-label { font-size: 0.52rem; font-weight: 700; letter-spacing: 0.2em; color: var(--c-muted); text-transform: uppercase; }
 .cp-input {
@@ -332,6 +371,7 @@
 .cp-input:focus { border-color: var(--c-teal); background: white; }
 
 .cp-modal-foot { padding: 1rem 1.5rem; border-top: 1px solid var(--c-border); background: var(--c-surface); }
+.cp-modal-foot { position: sticky; bottom: 0; z-index: 2; }
 .cp-submit-btn {
     width: 100%;
     padding: 0.85rem;
@@ -467,7 +507,13 @@
     <div class="cp-modal">
         <div class="cp-modal-head">
             <h2 class="cp-modal-title">Tambah Bab</h2>
-            <div onclick="closeAddModal()" class="cp-modal-close"><i class="fas fa-times"></i></div>
+            <div class="cp-modal-actions">
+                <button type="submit" form="addForm" class="cp-modal-save">
+                    <i class="fas fa-floppy-disk"></i>
+                    Simpan
+                </button>
+                <div onclick="closeAddModal()" class="cp-modal-close"><i class="fas fa-times"></i></div>
+            </div>
         </div>
         <div class="cp-modal-body">
             <form action="{{ route('admin.lessons.store', $course->id) }}" method="POST" id="addForm">
@@ -502,7 +548,13 @@
     <div class="cp-modal">
         <div class="cp-modal-head">
             <h2 class="cp-modal-title">Edit Bab</h2>
-            <div onclick="closeEditModal()" class="cp-modal-close"><i class="fas fa-times"></i></div>
+            <div class="cp-modal-actions">
+                <button type="submit" form="editForm" class="cp-modal-save">
+                    <i class="fas fa-floppy-disk"></i>
+                    Update
+                </button>
+                <div onclick="closeEditModal()" class="cp-modal-close"><i class="fas fa-times"></i></div>
+            </div>
         </div>
         <div class="cp-modal-body">
             <form id="editForm" method="POST">
@@ -589,10 +641,46 @@ function initLessonEditors() {
         branding: false,
         resize: true,
         toolbar_mode: 'wrap',
+        toolbar_sticky: true,
+        toolbar_sticky_offset: 110,
         plugins: 'lists advlist link image table code autoresize',
-        toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | link image table | removeformat | code',
+        toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | sublist | link image table | removeformat | code',
         lists_indent_on_tab: true,
         setup: function (editor) {
+            editor.ui.registry.addButton('sublist', {
+                icon: 'indent',
+                text: 'Jadikan Sub-list',
+                tooltip: 'Jadikan Sub-list dari teks terpilih',
+                onAction: function () {
+                    const selectedText = editor.selection.getContent({ format: 'text' }) || '';
+                    const trimmed = selectedText.trim();
+                    if (!trimmed) {
+                        editor.execCommand('Indent');
+                        return;
+                    }
+
+                    const rawItems = trimmed
+                        .split(/[\r\n;]+/)
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+
+                    let isOrdered = false;
+                    const items = rawItems.map((line) => {
+                        const m = line.match(/^(\d+)[\.\)]\s*(.+)$/);
+                        if (m) {
+                            isOrdered = true;
+                            return m[2].trim();
+                        }
+                        return line;
+                    });
+
+                    const tag = isOrdered ? 'ol' : 'ul';
+                    const html = '<' + tag + '>' + items.map((t) => '<li>' + editor.dom.encode(t) + '</li>').join('') + '</' + tag + '>';
+                    editor.selection.setContent(html);
+                    editor.execCommand('Indent');
+                },
+            });
+
             editor.on('keydown', function (e) {
                 if (e.key !== 'Tab') return;
                 const node = editor.selection.getNode();
@@ -601,6 +689,11 @@ function initLessonEditors() {
                 e.preventDefault();
                 editor.execCommand(e.shiftKey ? 'Outdent' : 'Indent');
             });
+
+            editor.addShortcut('meta+shift+8', 'Bullet list', () => editor.execCommand('InsertUnorderedList'));
+            editor.addShortcut('meta+shift+7', 'Numbered list', () => editor.execCommand('InsertOrderedList'));
+            editor.addShortcut('meta+]', 'Indent', () => editor.execCommand('Indent'));
+            editor.addShortcut('meta+[', 'Outdent', () => editor.execCommand('Outdent'));
         },
         content_style: 'body{font-family:DM Sans, Plus Jakarta Sans, sans-serif;font-size:14px;line-height:1.7} img{max-width:100%;height:auto;border-radius:16px}',
         image_caption: true,
@@ -687,6 +780,26 @@ function closeEditModal() { document.getElementById('editModal').classList.add('
 
 document.addEventListener('DOMContentLoaded', function () {
     initLessonEditors();
+
+    const style = document.createElement('style');
+    style.textContent = '.cp-tox-menu-close{position:absolute;top:8px;right:10px;width:28px;height:28px;border-radius:8px;border:1px solid rgba(229,231,235,1);background:#fff;color:#111827;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer} .cp-tox-menu-close:hover{background:#F9FAFB}';
+    document.head.appendChild(style);
+
+    const obs = new MutationObserver(() => {
+        document.querySelectorAll('.tox-menu').forEach((menu) => {
+            if (menu.querySelector('.cp-tox-menu-close')) return;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cp-tox-menu-close';
+            btn.textContent = '×';
+            btn.addEventListener('click', () => {
+                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+            });
+            menu.style.position = 'relative';
+            menu.prepend(btn);
+        });
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
 });
 
 window.onclick = function(e) {

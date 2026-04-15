@@ -82,10 +82,6 @@
                                 <i class="fas fa-layer-group text-[10px]"></i>
                                 {{ $lesson->course->lessons->count() }} Bab
                             </span>
-                            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/10 border border-white/20 backdrop-blur text-[10px] font-black uppercase tracking-widest text-white">
-                                <i class="fas fa-clock text-[10px]"></i>
-                                Estimasi 5–8 Menit
-                            </span>
                         </div>
                     </div>
                 @endif

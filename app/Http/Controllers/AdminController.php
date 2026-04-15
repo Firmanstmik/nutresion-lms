@@ -11,6 +11,8 @@ use App\Models\Result;
 use App\Models\School;
 use App\Models\User;
 use App\Models\UserProgress;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -563,6 +565,10 @@ class AdminController extends Controller
         }
 
         $schoolId = $request->query('school_id');
+        $format = $request->query('format', 'excel');
+        if (! in_array($format, ['excel', 'pdf', 'csv'], true)) {
+            $format = 'excel';
+        }
 
         $query = Result::query()
             ->with(['user.school', 'course'])
@@ -583,33 +589,105 @@ class AdminController extends Controller
 
         $results = $query->get();
 
-        $filename = 'laporan_'.($type === 'pre' ? 'pretest' : 'posttest').'_'.now()->format('Ymd_His').'.csv';
+        $baseName = 'laporan_'.($type === 'pre' ? 'pretest' : 'posttest').'_'.now()->format('Ymd_His');
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ];
+        if ($format === 'csv') {
+            $filename = $baseName.'.csv';
+            $headers = [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+            ];
 
-        return response()->streamDownload(function () use ($results) {
-            $out = fopen('php://output', 'w');
-            fprintf($out, "\xEF\xBB\xBF");
+            return response()->streamDownload(function () use ($results) {
+                $out = fopen('php://output', 'w');
+                fprintf($out, "\xEF\xBB\xBF");
 
-            fputcsv($out, ['No', 'Nama Siswa', 'NISN/Username', 'Sekolah', 'Kursus', 'Skor', 'Tanggal', 'Waktu']);
+                fputcsv($out, ['No', 'Nama Siswa', 'NISN/Username', 'Sekolah', 'Kursus', 'Skor', 'Tanggal', 'Waktu']);
 
-            $i = 1;
-            foreach ($results as $r) {
-                fputcsv($out, [
-                    $i++,
-                    $r->user?->name,
-                    $r->user?->username,
-                    $r->user?->school?->name ?? 'Institusi Umum',
-                    $r->course?->title,
-                    (int) $r->score,
-                    $r->created_at?->format('d/m/Y'),
-                    $r->created_at?->format('H:i:s'),
-                ]);
+                $i = 1;
+                foreach ($results as $r) {
+                    fputcsv($out, [
+                        $i++,
+                        $r->user?->name,
+                        $r->user?->username,
+                        $r->user?->school?->name ?? 'Institusi Umum',
+                        $r->course?->title,
+                        (int) $r->score,
+                        $r->created_at?->format('d/m/Y'),
+                        $r->created_at?->format('H:i:s'),
+                    ]);
+                }
+
+                fclose($out);
+            }, $filename, $headers);
+        }
+
+        $rows = [];
+        $i = 1;
+        foreach ($results as $r) {
+            $rows[] = [
+                'no' => $i++,
+                'name' => (string) ($r->user?->name ?? ''),
+                'username' => (string) ($r->user?->username ?? ''),
+                'school' => (string) ($r->user?->school?->name ?? 'Institusi Umum'),
+                'course' => (string) ($r->course?->title ?? ''),
+                'score' => (int) ($r->score ?? 0),
+                'date' => (string) ($r->created_at?->format('d/m/Y') ?? ''),
+                'time' => (string) ($r->created_at?->format('H:i:s') ?? ''),
+            ];
+        }
+
+        $title = 'Laporan '.($type === 'pre' ? 'Pre Test' : 'Post Test');
+        $html = '<!doctype html><html><head><meta charset="utf-8"><style>
+            body{font-family:DejaVu Sans, Arial, sans-serif;font-size:12px;color:#111827}
+            h1{font-size:16px;margin:0 0 10px}
+            table{width:100%;border-collapse:collapse}
+            th,td{border:1px solid #E5E7EB;padding:6px 8px;vertical-align:top}
+            th{background:#F3F4F6;font-weight:700}
+            .muted{color:#6B7280;font-size:11px;margin:0 0 12px}
+        </style></head><body>';
+        $html .= '<h1>'.$title.'</h1>';
+        $html .= '<div class="muted">Diunduh: '.now()->format('d/m/Y H:i:s').'</div>';
+        $html .= '<table><thead><tr>
+            <th>No</th><th>Nama Siswa</th><th>NISN/Username</th><th>Sekolah</th><th>Kursus</th><th>Skor</th><th>Tanggal</th><th>Waktu</th>
+        </tr></thead><tbody>';
+        foreach ($rows as $row) {
+            $html .= '<tr>'
+                .'<td>'.$row['no'].'</td>'
+                .'<td>'.e($row['name']).'</td>'
+                .'<td>'.e($row['username']).'</td>'
+                .'<td>'.e($row['school']).'</td>'
+                .'<td>'.e($row['course']).'</td>'
+                .'<td>'.$row['score'].'</td>'
+                .'<td>'.e($row['date']).'</td>'
+                .'<td>'.e($row['time']).'</td>'
+                .'</tr>';
+        }
+        $html .= '</tbody></table></body></html>';
+
+        if ($format === 'pdf') {
+            if (! class_exists(Dompdf::class)) {
+                abort(500, 'PDF export belum tersedia (dompdf belum terpasang).');
             }
+            $options = new Options;
+            $options->set('isRemoteEnabled', false);
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
 
-            fclose($out);
-        }, $filename, $headers);
+            $filename = $baseName.'.pdf';
+
+            return response($dompdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]);
+        }
+
+        $filename = $baseName.'.xls';
+
+        return response($html, 200, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 }

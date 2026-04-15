@@ -188,6 +188,70 @@
 }
 .sp-export-btn i { font-size: 0.75rem; }
 
+.sp-export-dd { position: relative; }
+.sp-export-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.65rem 0.95rem;
+    border-radius: 2px;
+    border: 1px solid var(--s-border);
+    background: var(--s-white);
+    color: var(--s-ink);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.sp-export-trigger:hover {
+    border-color: rgba(15,126,110,0.25);
+    background: rgba(15,126,110,0.05);
+    color: var(--s-teal);
+}
+.sp-export-trigger-pre:hover {
+    border-color: rgba(217,119,6,0.25);
+    background: rgba(217,119,6,0.06);
+    color: #B45309;
+}
+.sp-export-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 220px;
+    background: var(--s-white);
+    border: 1px solid var(--s-border);
+    border-radius: 2px;
+    box-shadow: 0 14px 40px rgba(11,30,63,0.16);
+    padding: 0.5rem;
+    display: none;
+    z-index: 50;
+}
+.sp-export-menu.open { display: block; }
+.sp-export-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 2px;
+    text-decoration: none;
+    color: var(--s-ink);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.sp-export-item:hover { background: var(--s-surface); color: var(--s-navy); }
+.sp-export-item small {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: rgba(107,114,128,0.7);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
 /* ══════════════════════════════════════════════
    STATS STRIP
 ══════════════════════════════════════════════ */
@@ -456,14 +520,40 @@ tr:last-child .sp-td { border-bottom: none; }
                         <option value="{{ $school->id }}">{{ $school->name }}</option>
                     @endforeach
                 </select>
-                <a id="sp-export-pre" class="sp-export-btn sp-export-btn-pre" href="{{ route('admin.results.export', ['type' => 'pre']) }}">
-                    <i class="fas fa-download"></i>
-                    Download Pretest
-                </a>
-                <a id="sp-export-post" class="sp-export-btn" href="{{ route('admin.results.export', ['type' => 'post']) }}">
-                    <i class="fas fa-download"></i>
-                    Download Posttest
-                </a>
+                <div class="sp-export-dd">
+                    <button type="button" class="sp-export-trigger sp-export-trigger-pre" id="sp-export-pre-trigger">
+                        <i class="fas fa-download"></i>
+                        Download Pretest
+                        <i class="fas fa-chevron-down" style="font-size:0.65rem;opacity:0.7;"></i>
+                    </button>
+                    <div class="sp-export-menu" id="sp-export-pre-menu">
+                        <a class="sp-export-item" id="sp-export-pre-excel" href="{{ route('admin.results.export', ['type' => 'pre']) }}">
+                            Excel
+                            <small>XLS</small>
+                        </a>
+                        <a class="sp-export-item" id="sp-export-pre-pdf" href="{{ route('admin.results.export', ['type' => 'pre', 'format' => 'pdf']) }}">
+                            PDF
+                            <small>PDF</small>
+                        </a>
+                    </div>
+                </div>
+                <div class="sp-export-dd">
+                    <button type="button" class="sp-export-trigger" id="sp-export-post-trigger">
+                        <i class="fas fa-download"></i>
+                        Download Posttest
+                        <i class="fas fa-chevron-down" style="font-size:0.65rem;opacity:0.7;"></i>
+                    </button>
+                    <div class="sp-export-menu" id="sp-export-post-menu">
+                        <a class="sp-export-item" id="sp-export-post-excel" href="{{ route('admin.results.export', ['type' => 'post']) }}">
+                            Excel
+                            <small>XLS</small>
+                        </a>
+                        <a class="sp-export-item" id="sp-export-post-pdf" href="{{ route('admin.results.export', ['type' => 'post', 'format' => 'pdf']) }}">
+                            PDF
+                            <small>PDF</small>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
         <div id="resultsChart" style="min-height: 300px;"></div>
@@ -550,6 +640,7 @@ tr:last-child .sp-td { border-bottom: none; }
 </div>
 
 <div id="resultsTrendConfig" data-url="{{ route('admin.results.trend-data') }}" style="display:none;"></div>
+<script type="application/json" id="resultsSeedData">{!! json_encode($results->take(10)->reverse()->values()) !!}</script>
 
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
@@ -571,12 +662,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Chart Data
-    const resultsData = JSON.parse('{!! addslashes(json_encode($results->take(10)->reverse()->values())) !!}');
+    const seedEl = document.getElementById('resultsSeedData');
+    let resultsData = [];
+    try {
+        resultsData = JSON.parse(seedEl?.textContent || '[]');
+    } catch (e) {
+        resultsData = [];
+    }
     
     const options = {
         series: [{
             name: 'Skor Siswa',
-            data: resultsData.map(r => r.score)
+            data: (Array.isArray(resultsData) ? resultsData : []).map(r => r.score)
         }],
         chart: {
             height: 350,
@@ -597,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
         xaxis: {
-            categories: resultsData.map(r => r.user.name.split(' ')[0]),
+            categories: (Array.isArray(resultsData) ? resultsData : []).map(r => (r?.user?.name || 'Siswa').split(' ')[0]),
             labels: {
                 style: {
                     fontSize: '10px',
@@ -665,25 +762,69 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(refreshTrend, 8000);
 
     const schoolFilterEl = document.getElementById('sp-school-filter');
-    const exportPreEl = document.getElementById('sp-export-pre');
-    const exportPostEl = document.getElementById('sp-export-post');
+    const preTrigger = document.getElementById('sp-export-pre-trigger');
+    const preMenu = document.getElementById('sp-export-pre-menu');
+    const preExcel = document.getElementById('sp-export-pre-excel');
+    const prePdf = document.getElementById('sp-export-pre-pdf');
+
+    const postTrigger = document.getElementById('sp-export-post-trigger');
+    const postMenu = document.getElementById('sp-export-post-menu');
+    const postExcel = document.getElementById('sp-export-post-excel');
+    const postPdf = document.getElementById('sp-export-post-pdf');
 
     function setExportLinks() {
         const schoolId = schoolFilterEl?.value || 'all';
-        if (exportPreEl) {
-            const base = exportPreEl.getAttribute('href')?.split('?')[0] || '';
-            exportPreEl.setAttribute('href', base + '?school_id=' + encodeURIComponent(schoolId));
+        const qsExcel = '?school_id=' + encodeURIComponent(schoolId) + '&format=excel';
+        const qsPdf = '?school_id=' + encodeURIComponent(schoolId) + '&format=pdf';
+
+        if (preExcel) {
+            const base = preExcel.getAttribute('href')?.split('?')[0] || '';
+            preExcel.setAttribute('href', base + qsExcel);
         }
-        if (exportPostEl) {
-            const base = exportPostEl.getAttribute('href')?.split('?')[0] || '';
-            exportPostEl.setAttribute('href', base + '?school_id=' + encodeURIComponent(schoolId));
+        if (prePdf) {
+            const base = prePdf.getAttribute('href')?.split('?')[0] || '';
+            prePdf.setAttribute('href', base + qsPdf);
         }
+        if (postExcel) {
+            const base = postExcel.getAttribute('href')?.split('?')[0] || '';
+            postExcel.setAttribute('href', base + qsExcel);
+        }
+        if (postPdf) {
+            const base = postPdf.getAttribute('href')?.split('?')[0] || '';
+            postPdf.setAttribute('href', base + qsPdf);
+        }
+    }
+
+    function closeMenus() {
+        if (preMenu) preMenu.classList.remove('open');
+        if (postMenu) postMenu.classList.remove('open');
+    }
+
+    function toggleMenu(menu) {
+        if (!menu) return;
+        const shouldOpen = !menu.classList.contains('open');
+        closeMenus();
+        if (shouldOpen) menu.classList.add('open');
     }
 
     if (schoolFilterEl) {
         schoolFilterEl.addEventListener('change', setExportLinks);
         setExportLinks();
     }
+
+    if (preTrigger) preTrigger.addEventListener('click', () => toggleMenu(preMenu));
+    if (postTrigger) postTrigger.addEventListener('click', () => toggleMenu(postMenu));
+
+    document.addEventListener('click', (e) => {
+        const inPre = e.target.closest('#sp-export-pre-trigger') || e.target.closest('#sp-export-pre-menu');
+        const inPost = e.target.closest('#sp-export-post-trigger') || e.target.closest('#sp-export-post-menu');
+        if (inPre || inPost) return;
+        closeMenus();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenus();
+    });
 });
 </script>
 
