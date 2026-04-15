@@ -588,9 +588,20 @@ function initLessonEditors() {
         menubar: false,
         branding: false,
         resize: true,
+        toolbar_mode: 'wrap',
         plugins: 'lists advlist link image table code autoresize',
         toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | link image table | removeformat | code',
         lists_indent_on_tab: true,
+        setup: function (editor) {
+            editor.on('keydown', function (e) {
+                if (e.key !== 'Tab') return;
+                const node = editor.selection.getNode();
+                const li = editor.dom.getParent(node, 'li');
+                if (!li) return;
+                e.preventDefault();
+                editor.execCommand(e.shiftKey ? 'Outdent' : 'Indent');
+            });
+        },
         content_style: 'body{font-family:DM Sans, Plus Jakarta Sans, sans-serif;font-size:14px;line-height:1.7} img{max-width:100%;height:auto;border-radius:16px}',
         image_caption: true,
         automatic_uploads: true,
