@@ -528,7 +528,22 @@ class AdminController extends Controller
 
     public function resultsTrendData()
     {
-        $latest = Result::with('user')->latest()->take(10)->get()->reverse()->values();
+        $schoolId = request()->query('school_id');
+
+        $baseQuery = Result::query()->with('user');
+        if ($schoolId !== null && $schoolId !== '' && $schoolId !== 'all') {
+            if ($schoolId === 'null') {
+                $baseQuery->whereHas('user', function ($q) {
+                    $q->whereNull('school_id');
+                });
+            } else {
+                $baseQuery->whereHas('user', function ($q) use ($schoolId) {
+                    $q->where('school_id', $schoolId);
+                });
+            }
+        }
+
+        $latest = $baseQuery->clone()->latest()->take(10)->get()->reverse()->values();
 
         $labels = $latest->map(function ($r) {
             $name = $r->user?->name ?? 'Siswa';
@@ -540,10 +555,10 @@ class AdminController extends Controller
             return (int) $s;
         });
 
-        $total = Result::count();
-        $avg = (int) round((float) (Result::avg('score') ?? 0));
-        $max = (int) (Result::max('score') ?? 0);
-        $pass = Result::where('score', '>=', 70)->count();
+        $total = (int) $baseQuery->clone()->count();
+        $avg = (int) round((float) ($baseQuery->clone()->avg('score') ?? 0));
+        $max = (int) ($baseQuery->clone()->max('score') ?? 0);
+        $pass = (int) $baseQuery->clone()->where('score', '>=', 70)->count();
         $passRate = $total > 0 ? (int) round(($pass / $total) * 100) : 0;
 
         return response()->json([
@@ -665,11 +680,27 @@ class AdminController extends Controller
         $html .= '</tbody></table></body></html>';
 
         if ($format === 'pdf') {
+            $count = $results->count();
+            if (($schoolId === null || $schoolId === '' || $schoolId === 'all') && $count > 250) {
+                return redirect()
+                    ->route('admin.results.index')
+                    ->with('error', 'PDF terlalu besar untuk semua sekolah. Pilih sekolah terlebih dahulu agar PDF bisa diunduh.');
+            }
+            if ($count > 800) {
+                return redirect()
+                    ->route('admin.results.index')
+                    ->with('error', 'PDF terlalu besar. Perkecil filter sekolah agar data tidak terlalu banyak.');
+            }
+
             if (! class_exists(Dompdf::class)) {
                 abort(500, 'PDF export belum tersedia (dompdf belum terpasang).');
             }
+            set_time_limit(120);
+            Storage::disk('local')->makeDirectory('dompdf');
             $options = new Options;
             $options->set('isRemoteEnabled', false);
+            $options->set('tempDir', storage_path('app/dompdf'));
+            $options->set('isHtml5ParserEnabled', true);
             $dompdf = new Dompdf($options);
             $dompdf->loadHtml($html);
             $dompdf->setPaper('A4', 'landscape');

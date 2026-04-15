@@ -144,6 +144,41 @@
 }
 .sp-chart-title i { color: var(--s-teal); }
 
+.sp-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 100px;
+    border: 1px solid rgba(15,126,110,0.18);
+    background: rgba(15,126,110,0.06);
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--s-teal);
+}
+.sp-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--s-teal);
+    box-shadow: 0 0 0 0 rgba(15,126,110,0.45);
+    animation: sp-pulse 1.2s infinite;
+}
+@keyframes sp-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(15,126,110,0.45); }
+    70% { box-shadow: 0 0 0 10px rgba(15,126,110,0); }
+    100% { box-shadow: 0 0 0 0 rgba(15,126,110,0); }
+}
+.sp-updated {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: rgba(107,114,128,0.75);
+    letter-spacing: 0.06em;
+}
+
 .sp-export {
     display: flex;
     align-items: center;
@@ -511,7 +546,14 @@ tr:last-child .sp-td { border-bottom: none; }
     {{-- ═══ CHART SECTION ═══════════════════════════ --}}
     <div class="sp-chart-card">
         <div class="sp-chart-header">
-            <h3 class="sp-chart-title"><i class="fas fa-chart-area"></i> Tren Performa Nilai</h3>
+            <div style="display:flex; align-items:center; gap:0.9rem; flex-wrap:wrap;">
+                <h3 class="sp-chart-title"><i class="fas fa-chart-area"></i> Tren Performa Nilai</h3>
+                <span class="sp-live" title="Auto update">
+                    <span class="sp-live-dot"></span>
+                    Live
+                </span>
+                <span class="sp-updated" id="sp-last-updated"></span>
+            </div>
             <div class="sp-export">
                 <select id="sp-school-filter" class="sp-export-select">
                     <option value="all">Semua Sekolah</option>
@@ -679,11 +721,24 @@ document.addEventListener('DOMContentLoaded', function() {
             height: 350,
             type: 'area',
             toolbar: { show: false },
-            fontFamily: 'DM Sans, sans-serif'
+            fontFamily: 'DM Sans, sans-serif',
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 650,
+                animateGradually: { enabled: true, delay: 120 },
+                dynamicAnimation: { enabled: true, speed: 520 }
+            }
         },
         colors: ['#0F7E6E'],
         dataLabels: { enabled: false },
-        stroke: { curve: 'smooth', width: 3 },
+        stroke: { curve: 'smooth', width: 3.5 },
+        markers: {
+            size: 4,
+            strokeWidth: 2,
+            strokeColors: '#FFFFFF',
+            hover: { size: 6 }
+        },
         fill: {
             type: 'gradient',
             gradient: {
@@ -692,6 +747,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 opacityTo: 0.05,
                 stops: [20, 100]
             }
+        },
+        noData: {
+            text: 'Belum ada data untuk ditampilkan',
+            align: 'center',
+            verticalAlign: 'middle',
+            style: { color: '#6B7280', fontSize: '12px', fontWeight: 700 }
         },
         xaxis: {
             categories: (Array.isArray(resultsData) ? resultsData : []).map(r => (r?.user?.name || 'Siswa').split(' ')[0]),
@@ -731,6 +792,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statTotalEl = document.getElementById('sp-stat-total');
     const statPassEl = document.getElementById('sp-stat-passrate');
     const statMaxEl = document.getElementById('sp-stat-max');
+    const lastUpdatedEl = document.getElementById('sp-last-updated');
 
     function pad3(n) {
         return String(n ?? 0).padStart(3, '0');
@@ -739,7 +801,9 @@ document.addEventListener('DOMContentLoaded', function() {
     async function refreshTrend() {
         if (!trendUrl) return;
         try {
-            const res = await fetch(trendUrl, { headers: { Accept: 'application/json' } });
+            const schoolId = schoolFilterEl?.value || 'all';
+            const url = trendUrl + '?school_id=' + encodeURIComponent(schoolId);
+            const res = await fetch(url, { headers: { Accept: 'application/json' } });
             if (!res.ok) return;
             const data = await res.json();
 
@@ -754,12 +818,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (statTotalEl) statTotalEl.textContent = pad3(stats.total);
             if (statPassEl) statPassEl.textContent = String(stats.pass_rate ?? 0) + '%';
             if (statMaxEl) statMaxEl.textContent = pad3(stats.max);
+
+            if (lastUpdatedEl) {
+                const now = new Date();
+                lastUpdatedEl.textContent = 'Update: ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
         } catch (e) {
         }
     }
 
     refreshTrend();
-    setInterval(refreshTrend, 8000);
+    setInterval(refreshTrend, 5000);
 
     const schoolFilterEl = document.getElementById('sp-school-filter');
     const preTrigger = document.getElementById('sp-export-pre-trigger');
@@ -808,9 +877,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (schoolFilterEl) {
-        schoolFilterEl.addEventListener('change', setExportLinks);
+        schoolFilterEl.addEventListener('change', () => {
+            setExportLinks();
+            refreshTrend();
+        });
         setExportLinks();
     }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') refreshTrend();
+    });
+    window.addEventListener('focus', refreshTrend);
 
     if (preTrigger) preTrigger.addEventListener('click', () => toggleMenu(preMenu));
     if (postTrigger) postTrigger.addEventListener('click', () => toggleMenu(postMenu));
