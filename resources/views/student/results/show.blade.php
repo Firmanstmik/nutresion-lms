@@ -8,11 +8,11 @@
         
         <div class="relative z-10 space-y-10">
             <div class="w-32 h-32 {{ $result->score >= 70 ? 'bg-teal-600 shadow-teal-200' : 'bg-red-500 shadow-red-200' }} rounded-[3rem] mx-auto flex items-center justify-center text-white shadow-2xl mb-12 transition-transform hover:scale-110">
-                <i class="fas {{ $result->score >= 70 ? 'fa-trophy' : 'fa-exclamation-triangle' }} text-5xl"></i>
+                <i class="fas {{ $result->type === 'pre' ? 'fa-clipboard-list' : ($result->score >= 70 ? 'fa-trophy' : 'fa-exclamation-triangle') }} text-5xl"></i>
             </div>
             
             <div class="space-y-4">
-                <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest leading-relaxed">Hasil Post Test</h2>
+                <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest leading-relaxed">Hasil {{ $result->type === 'pre' ? 'Pre Test' : 'Post Test' }}</h2>
                 <h1 class="text-4xl sm:text-6xl font-black text-gray-900 leading-tight tracking-tight">{{ $result->course->title }}</h1>
             </div>
 

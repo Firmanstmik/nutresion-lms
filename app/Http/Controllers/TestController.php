@@ -65,9 +65,10 @@ class TestController extends Controller
         $rounded_score = round($final_score);
 
         $result = Result::create([
-            'user_id' => $user_id,
+            'user_id'   => $user_id,
             'course_id' => $course_id,
-            'score' => $rounded_score,
+            'score'     => $rounded_score,
+            'type'      => 'post',
         ]);
 
         // Create Notification for Result
@@ -94,7 +95,12 @@ class TestController extends Controller
 
     public function myResults()
     {
-        $results = Result::where('user_id', Auth::id())->with('course')->get();
-        return view('student.results.index', compact('results'));
+        $user_id = Auth::id();
+        $allResults = Result::where('user_id', $user_id)->with('course')->get();
+        $preResults  = $allResults->where('type', 'pre')->values();
+        $postResults = $allResults->where('type', 'post')->values();
+        // Keep $results for backward compatibility
+        $results = $postResults;
+        return view('student.results.index', compact('results', 'preResults', 'postResults'));
     }
 }

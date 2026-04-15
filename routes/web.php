@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\PreTestController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\NotificationController;
 
@@ -54,6 +55,8 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     Route::post('/lessons/{id}/complete', [LessonController::class, 'complete'])->name('lessons.complete');
     Route::get('/courses/{course_id}/test', [TestController::class, 'index'])->name('tests.index');
     Route::post('/courses/{course_id}/test', [TestController::class, 'submit'])->name('tests.submit');
+    Route::get('/courses/{course_id}/pretest', [PreTestController::class, 'index'])->name('tests.pre.index');
+    Route::post('/courses/{course_id}/pretest', [PreTestController::class, 'submit'])->name('tests.pre.submit');
     Route::get('/results/{id}', [TestController::class, 'result'])->name('results.show');
     Route::get('/results', [TestController::class, 'myResults'])->name('results.index');
     Route::view('/profile', 'student.profile')->name('profile');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lesson;
+use App\Models\Result;
 use App\Models\UserProgress;
 use App\Models\Notification;
 use Illuminate\Http\Request;
@@ -12,8 +13,24 @@ class LessonController extends Controller
 {
     public function show($id)
     {
-        $lesson = Lesson::with('course.lessons')->findOrFail($id);
+        $lesson = Lesson::with('course.lessons', 'course.preQuestions')->findOrFail($id);
         $user_id = Auth::id();
+
+        // ── Pretest Gate ──────────────────────────────────────────────
+        // Jika kursus ini punya soal pretest, siswa WAJIB mengerjakan
+        // pretest terlebih dahulu sebelum bisa membuka bab manapun.
+        if ($lesson->course->preQuestions->count() > 0) {
+            $pretest_done = Result::where('user_id', $user_id)
+                ->where('course_id', $lesson->course_id)
+                ->where('type', 'pre')
+                ->exists();
+
+            if (!$pretest_done) {
+                return redirect()->route('tests.pre.index', $lesson->course_id)
+                    ->with('warning', 'Kamu harus mengerjakan Pre Test terlebih dahulu sebelum mengakses materi.');
+            }
+        }
+        // ─────────────────────────────────────────────────────────────
         $progress = UserProgress::where('user_id', $user_id)
             ->where('lesson_id', $id)
             ->first();

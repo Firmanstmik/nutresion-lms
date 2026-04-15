@@ -202,12 +202,71 @@
         <div class="rs-section-head">
             <div class="rs-section-left">
                 <div class="rs-section-tag">Riwayat Nilai</div>
-                <h2 class="rs-section-title">Hasil <em>Post-Test</em></h2>
+                <h2 class="rs-section-title">Hasil <em>Pretest &amp; Posttest</em></h2>
             </div>
             <a href="{{ route('courses.index') }}" class="rs-top-link">
                 <i class="fas fa-arrow-left"></i>
                 Kembali Belajar
             </a>
+        </div>
+
+        {{-- ── PRE TEST section ──────────────────────────────────── --}}
+        @if(isset($preResults) && $preResults->count() > 0)
+        <div class="rs-sub-head">
+            <div class="rs-sub-badge rs-sub-pre">
+                <i class="fas fa-clipboard-list"></i>
+                Nilai Pre Test
+            </div>
+        </div>
+        <div class="rs-table-card" style="margin-bottom:1.5rem;">
+            @foreach($preResults as $i => $result)
+                @php
+                    $pass    = $result->score >= 70;
+                    $s       = (int) $result->score;
+                    $grade   = $s >= 90 ? 'A' : ($s >= 80 ? 'B' : ($s >= 70 ? 'C' : ($s >= 60 ? 'D' : 'E')));
+                    $gradeColor = $s >= 70 ? 'rs-grade-pass' : 'rs-grade-fail';
+                @endphp
+                <div class="rs-row" style="--i: {{ $i }}">
+                    <div class="rs-grade-col">
+                        <div class="rs-grade {{ $gradeColor }}">{{ $grade }}</div>
+                    </div>
+                    <div class="rs-info-col">
+                        <div class="rs-row-meta">
+                            <span class="rs-row-date"><i class="fas fa-calendar-days"></i> {{ $result->created_at->format('d M Y') }}</span>
+                            <span class="rs-row-time"><i class="fas fa-clock"></i> {{ $result->created_at->format('H:i') }}</span>
+                        </div>
+                        <div class="rs-row-title">{{ $result->course->title }}</div>
+                        <div class="rs-row-progress">
+                            <div class="rs-row-track">
+                                <div class="rs-row-fill" style="--pct: {{ $s }}%; background:linear-gradient(90deg,#D97706,#F59E0B);"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rs-score-col">
+                        <div class="rs-score-wrap">
+                            <span class="rs-score-num" style="color:#D97706;">{{ $s }}</span>
+                            <span class="rs-score-pts">pts</span>
+                        </div>
+                        <div class="rs-badge" style="background:rgba(217,119,6,0.1);color:#D97706;border-color:rgba(217,119,6,0.2);">
+                            <i class="fas fa-clipboard-check"></i> Pre Test
+                        </div>
+                    </div>
+                    <div class="rs-action-col">
+                        <a href="{{ route('results.show', $result->id) }}" class="rs-detail-btn">
+                            <span>Detail</span><i class="fas fa-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        @endif
+
+        {{-- ── POST TEST section ─────────────────────────────────── --}}
+        <div class="rs-sub-head">
+            <div class="rs-sub-badge rs-sub-post">
+                <i class="fas fa-trophy"></i>
+                Nilai Post Test
+            </div>
         </div>
 
         <div class="rs-table-card">
@@ -1070,6 +1129,36 @@
     background: var(--g600);
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(13,92,52,0.34);
+}
+
+/* ── Sub-section badges ── */
+.rs-sub-head {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    margin-top: 0.25rem;
+}
+.rs-sub-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 100px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: 1.5px solid transparent;
+}
+.rs-sub-pre {
+    background: rgba(217,119,6,0.08);
+    border-color: rgba(217,119,6,0.25);
+    color: #D97706;
+}
+.rs-sub-post {
+    background: var(--g50);
+    border-color: var(--g100);
+    color: var(--g600);
 }
 
 /* ── Animation ── */

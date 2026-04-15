@@ -107,7 +107,12 @@
                     Kurikulum <span class="nrd-em">Pembelajaran</span>
                 </h2>
                 <p class="nrd-section-sub">
-                    {{ $course->lessons->count() }} bab tersedia · Selesaikan semua untuk membuka Post Test
+                    {{ $course->lessons->count() }} bab tersedia
+                    @if($has_pre_test && !$pre_test_done)
+                        · <span style="color:#F59E0B;font-weight:700;"><i class="fas fa-lock" style="font-size:0.58rem;"></i> Selesaikan Pre Test untuk membuka bab</span>
+                    @else
+                        · Selesaikan semua untuk membuka Post Test
+                    @endif
                 </p>
             </div>
 
@@ -116,12 +121,14 @@
                 @foreach($course->lessons as $lesson)
                     @php $is_completed = isset($progress[$lesson->id]) && $progress[$lesson->id]; @endphp
 
-                    <div class="nrd-lesson-row {{ $is_completed ? 'nrd-row-done' : '' }}">
+                    <div class="nrd-lesson-row {{ $is_completed ? 'nrd-row-done' : '' }} {{ ($has_pre_test && !$pre_test_done) ? 'nrd-row-locked' : '' }}">
 
                         {{-- Number badge --}}
-                        <div class="nrd-lesson-num {{ $is_completed ? 'nrd-num-done' : '' }}">
+                        <div class="nrd-lesson-num {{ $is_completed ? 'nrd-num-done' : '' }} {{ ($has_pre_test && !$pre_test_done) ? 'nrd-num-locked' : '' }}">
                             @if($is_completed)
                                 <i class="fas fa-check"></i>
+                            @elseif($has_pre_test && !$pre_test_done)
+                                <i class="fas fa-lock"></i>
                             @else
                                 <span>{{ $loop->iteration }}</span>
                             @endif
@@ -134,6 +141,9 @@
                             <div class="nrd-lesson-meta">
                                 <span><i class="far fa-clock"></i> 15:00 Menit</span>
                                 <span><i class="far fa-file-alt"></i> Materi Belajar</span>
+                                @if($has_pre_test && !$pre_test_done)
+                                    <span class="nrd-lock-hint"><i class="fas fa-lock"></i> Kerjakan Pre Test dulu</span>
+                                @endif
                             </div>
                         </div>
 
@@ -143,6 +153,10 @@
                                 <i class="fas fa-check-circle"></i>
                                 <span>Selesai</span>
                             </div>
+                        @elseif($has_pre_test && !$pre_test_done)
+                            <a href="{{ route('tests.pre.index', $lesson->course_id) }}" class="nrd-lock-btn" title="Kerjakan Pre Test terlebih dahulu">
+                                <i class="fas fa-lock"></i>
+                            </a>
                         @else
                             <a href="{{ route('lessons.show', $lesson->id) }}" class="nrd-play-row-btn">
                                 <i class="fas fa-play"></i>
@@ -207,6 +221,44 @@
 
                 {{-- Divider --}}
                 <div class="nrd-sidebar-divider"></div>
+
+                {{-- Pre Test Block --}}
+                @if($has_pre_test)
+                    @if($pre_test_done)
+                        <div class="nrd-test-block">
+                            <div class="nrd-test-head">
+                                <div class="nrd-test-icon" style="background:rgba(74,222,128,0.12);border-color:rgba(74,222,128,0.3);color:#4ADE80;">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div>
+                                    <p class="nrd-test-eyebrow" style="color:#4ADE80;">PRE TEST SELESAI</p>
+                                    <p class="nrd-test-sub">Kamu sudah mengerjakan pre test</p>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="nrd-test-block nrd-pretest-alert">
+                            <div class="nrd-test-head">
+                                <div class="nrd-test-icon" style="background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.35);color:#FCD34D;">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <div>
+                                    <p class="nrd-test-eyebrow" style="color:#FCD34D;">PRE TEST DIPERLUKAN</p>
+                                    <p class="nrd-test-sub">Wajib dikerjakan sebelum belajar</p>
+                                </div>
+                            </div>
+                            <p class="nrd-test-desc">
+                                Sebelum mengakses materi, kamu harus menyelesaikan Pre Test terlebih dahulu.
+                            </p>
+                            <a href="{{ route('tests.pre.index', $course->id) }}" class="nrd-test-btn" style="background:linear-gradient(135deg,#D97706,#F59E0B);color:#fff;box-shadow:0 4px 16px rgba(217,119,6,0.4);">
+                                <i class="fas fa-clipboard-list"></i>
+                                MULAI PRE TEST
+                            </a>
+                        </div>
+                    @endif
+                    {{-- Divider --}}
+                    <div class="nrd-sidebar-divider"></div>
+                @endif
 
                 {{-- Post Test Block --}}
                 @if($has_post_test)
@@ -857,6 +909,42 @@
     .nrd-lesson-row { padding: 0.85rem 0.85rem; gap: 0.75rem; }
     .nrd-lesson-num { width: 38px; height: 38px; border-radius: 10px; }
     .nrd-sidebar { position: static; }
+}
+
+/* ── Lesson Locked State ─────────────────────────── */
+.nrd-row-locked { opacity: 0.72; }
+.nrd-num-locked {
+    background: rgba(245,158,11,0.12);
+    border-color: rgba(245,158,11,0.35);
+    color: #FCD34D;
+}
+.nrd-lock-hint {
+    color: #F59E0B;
+    font-size: 0.58rem;
+    font-weight: 700;
+    display: flex; align-items: center; gap: 0.3rem;
+}
+.nrd-lock-hint .fas { font-size: 0.55rem; }
+.nrd-lock-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: rgba(245,158,11,0.15);
+    color: #FCD34D;
+    border: 1.5px solid rgba(245,158,11,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+}
+.nrd-lock-btn:hover {
+    background: rgba(245,158,11,0.25);
+    transform: scale(1.1);
+}
+.nrd-pretest-alert { animation: nrd-pulse-border 2s infinite; }
+@keyframes nrd-pulse-border {
+    0%, 100% { box-shadow: none; }
+    50% { box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
 }
 </style>
 

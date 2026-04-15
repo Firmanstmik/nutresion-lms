@@ -78,7 +78,7 @@ class CourseController extends Controller
 
     public function detail($id)
     {
-        $course = Course::with(['lessons', 'postQuestions'])->findOrFail($id);
+        $course = Course::with(['lessons', 'postQuestions', 'preQuestions'])->findOrFail($id);
         $user_id = Auth::id();
         $progress = UserProgress::where('user_id', $user_id)
             ->whereIn('lesson_id', $course->lessons->pluck('id'))
@@ -91,6 +91,18 @@ class CourseController extends Controller
 
         $has_post_test = $course->postQuestions->count() > 0;
 
-        return view('student.courses.detail', compact('course', 'progress', 'all_completed', 'has_post_test'));
+        // Pretest info
+        $has_pre_test = $course->preQuestions->count() > 0;
+        $pre_test_done = $has_pre_test
+            ? Result::where('user_id', $user_id)
+                ->where('course_id', $id)
+                ->where('type', 'pre')
+                ->exists()
+            : true; // No pretest → treat as "done" so lessons are freely accessible
+
+        return view('student.courses.detail', compact(
+            'course', 'progress', 'all_completed', 'has_post_test',
+            'has_pre_test', 'pre_test_done'
+        ));
     }
 }
