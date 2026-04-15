@@ -445,7 +445,7 @@
                         data-title="{{ $lesson->title }}" 
                         data-order="{{ $lesson->order_number }}" 
                         data-video="{{ $lesson->video_url }}" 
-                        data-content="{{ $lesson->content }}"
+                        data-content='@json($lesson->content)'
                         class="cp-btn cp-btn-back" style="flex:1; justify-content:center; padding:0.6rem; color:var(--c-teal);">
                     EDIT
                 </button>
@@ -487,15 +487,8 @@
                     <input type="url" name="video_url" class="cp-input" placeholder="https://youtube.com/...">
                 </div>
                 <div class="cp-field" style="margin-top:1.25rem;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem;">
-                        <label class="cp-label" style="margin:0;">Isi Materi</label>
-                        <button type="button" class="cp-upload-btn" onclick="openLessonImagePicker('addLessonImage')">
-                            <i class="fas fa-image"></i>
-                            Upload Gambar
-                        </button>
-                    </div>
-                    <textarea name="content" id="addContent" rows="6" class="cp-input" placeholder="Tuliskan materi di sini... (bisa pakai HTML, contoh: &lt;img src=&quot;...&quot; /&gt;)"></textarea>
-                    <input type="file" id="addLessonImage" accept="image/*" style="display:none" onchange="uploadLessonImageAndInsert(this, 'addContent')">
+                    <label class="cp-label" style="margin:0;">Isi Materi</label>
+                    <textarea name="content" id="addContent" rows="10" class="cp-input" placeholder="Tulis materi di sini..."></textarea>
                 </div>
             </form>
         </div>
@@ -529,15 +522,8 @@
                     <input type="url" name="video_url" id="editVideoUrl" class="cp-input">
                 </div>
                 <div class="cp-field" style="margin-top:1.25rem;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem;">
-                        <label class="cp-label" style="margin:0;">Isi Materi</label>
-                        <button type="button" class="cp-upload-btn" onclick="openLessonImagePicker('editLessonImage')">
-                            <i class="fas fa-image"></i>
-                            Upload Gambar
-                        </button>
-                    </div>
-                    <textarea name="content" id="editContent" rows="6" class="cp-input"></textarea>
-                    <input type="file" id="editLessonImage" accept="image/*" style="display:none" onchange="uploadLessonImageAndInsert(this, 'editContent')">
+                    <label class="cp-label" style="margin:0;">Isi Materi</label>
+                    <textarea name="content" id="editContent" rows="10" class="cp-input"></textarea>
                 </div>
             </form>
         </div>
@@ -547,67 +533,83 @@
     </div>
 </div>
 
-<div id="lessonUploadConfig" data-upload-url="{{ route('admin.lessons.upload-image') }}" style="display:none"></div>
+<div id="lessonEditorConfig" data-upload-url="{{ route('admin.lessons.upload-image') }}" style="display:none;"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
 <script>
-function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
+function openAddModal() {
+    document.getElementById('addModal').classList.remove('hidden');
+    const editor = window.tinymce?.get('addContent');
+    if (editor) editor.setContent('');
+}
 function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
 
-function openLessonImagePicker(inputId) {
-    const input = document.getElementById(inputId);
-    if (input) input.click();
-}
-
-function insertAtCursor(textarea, text) {
-    if (!textarea) return;
-    const start = textarea.selectionStart ?? textarea.value.length;
-    const end = textarea.selectionEnd ?? textarea.value.length;
-    const before = textarea.value.slice(0, start);
-    const after = textarea.value.slice(end);
-    textarea.value = before + text + after;
-    const nextPos = start + text.length;
-    textarea.selectionStart = nextPos;
-    textarea.selectionEnd = nextPos;
-    textarea.focus();
-}
-
-async function uploadLessonImageAndInsert(fileInput, textareaId) {
-    const file = fileInput?.files?.[0];
-    const textarea = document.getElementById(textareaId);
-    if (!file) return;
-
+function initLessonEditors() {
+    const uploadUrl = document.getElementById('lessonEditorConfig')?.dataset?.uploadUrl || '';
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    const uploadUrl = document.getElementById('lessonUploadConfig')?.dataset?.uploadUrl || '';
-    const formData = new FormData();
-    formData.append('image', file);
 
-    try {
-        const res = await fetch(uploadUrl, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': token,
-                'Accept': 'application/json',
-            },
-            body: formData,
-        });
+    if (!window.tinymce) return;
+    if (window.tinymce.get('addContent') || window.tinymce.get('editContent')) return;
 
-        if (!res.ok) {
-            throw new Error('Upload gagal');
-        }
+    window.tinymce.init({
+        selector: '#addContent,#editContent',
+        height: 360,
+        menubar: false,
+        branding: false,
+        resize: true,
+        plugins: 'lists link image table code autoresize',
+        toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist | link image table | removeformat | code',
+        content_style: 'body{font-family:DM Sans, Plus Jakarta Sans, sans-serif;font-size:14px;line-height:1.7} img{max-width:100%;height:auto;border-radius:16px}',
+        image_caption: true,
+        automatic_uploads: true,
+        images_upload_handler: function (blobInfo) {
+            return new Promise(async function (resolve, reject) {
+                try {
+                    const formData = new FormData();
+                    formData.append('image', blobInfo.blob(), blobInfo.filename());
 
-        const data = await res.json();
-        const url = data?.url;
-        if (!url) {
-            throw new Error('URL gambar tidak ditemukan');
-        }
+                    const res = await fetch(uploadUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json',
+                        },
+                        body: formData,
+                    });
 
-        const html = '\n<img src="' + url + '" alt="" style="max-width:100%;height:auto;border-radius:16px;margin:12px 0;" />\n';
-        insertAtCursor(textarea, html);
-        fileInput.value = '';
-    } catch (e) {
-        fileInput.value = '';
-        alert('Gagal upload gambar. Silakan coba lagi.');
-    }
+                    if (!res.ok) {
+                        reject('Upload gagal');
+                        return;
+                    }
+
+                    const data = await res.json();
+                    const url = data?.url;
+                    if (!url) {
+                        reject('URL gambar tidak ditemukan');
+                        return;
+                    }
+
+                    resolve(url);
+                } catch (e) {
+                    reject('Upload gagal');
+                }
+            });
+        },
+        style_formats: [
+            { title: 'Paragraf', block: 'p' },
+            { title: 'Judul 2', block: 'h2' },
+            { title: 'Judul 3', block: 'h3' },
+            { title: 'Highlight', inline: 'span', styles: { backgroundColor: '#FEF3C7', padding: '2px 6px', borderRadius: '8px' } },
+            { title: 'Gambar - Kiri', selector: 'img', styles: { float: 'left', margin: '0 16px 16px 0', width: '45%' } },
+            { title: 'Gambar - Kanan', selector: 'img', styles: { float: 'right', margin: '0 0 16px 16px', width: '45%' } },
+            { title: 'Gambar - Penuh', selector: 'img', styles: { float: 'none', display: 'block', margin: '12px 0', width: '100%' } },
+        ],
+    });
+
+    const addForm = document.getElementById('addForm');
+    const editForm = document.getElementById('editForm');
+    if (addForm) addForm.addEventListener('submit', function () { window.tinymce?.triggerSave(); });
+    if (editForm) editForm.addEventListener('submit', function () { window.tinymce?.triggerSave(); });
 }
 
 function editLesson(btn) {
@@ -618,12 +620,29 @@ function editLesson(btn) {
     document.getElementById('editTitle').value = btn.dataset.title;
     document.getElementById('editOrderNumber').value = btn.dataset.order;
     document.getElementById('editVideoUrl').value = (btn.dataset.video === 'Tidak ada video' || !btn.dataset.video || btn.dataset.video === 'null') ? '' : btn.dataset.video;
-    document.getElementById('editContent').value = btn.dataset.content;
     
     modal.classList.remove('hidden');
+
+    initLessonEditors();
+    const editor = window.tinymce?.get('editContent');
+    if (editor) {
+        let content = '';
+        try {
+            content = JSON.parse(btn.dataset.content || '""') || '';
+        } catch (e) {
+            content = btn.dataset.content || '';
+        }
+        editor.setContent(content);
+    } else {
+        document.getElementById('editContent').value = btn.dataset.content;
+    }
 }
 
 function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
+
+document.addEventListener('DOMContentLoaded', function () {
+    initLessonEditors();
+});
 
 window.onclick = function(e) {
     if (e.target.classList.contains('cp-modal-backdrop')) {
