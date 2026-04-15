@@ -551,6 +551,37 @@ function initLessonEditors() {
     if (!window.tinymce) return;
     if (window.tinymce.get('addContent') || window.tinymce.get('editContent')) return;
 
+    async function compressImageBlob(blob) {
+        try {
+            if (!blob || !blob.type?.startsWith('image/')) return blob;
+            if (blob.size <= 900 * 1024) return blob;
+
+            const maxDim = 1600;
+            const quality = 0.82;
+
+            if ('createImageBitmap' in window) {
+                const bmp = await createImageBitmap(blob);
+                const scale = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
+                if (scale >= 1 && blob.size <= 1400 * 1024) return blob;
+
+                const w = Math.max(1, Math.round(bmp.width * scale));
+                const h = Math.max(1, Math.round(bmp.height * scale));
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bmp, 0, 0, w, h);
+
+                const out = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+                return out || blob;
+            }
+
+            return blob;
+        } catch (e) {
+            return blob;
+        }
+    }
+
     window.tinymce.init({
         selector: '#addContent,#editContent',
         height: 360,
@@ -565,8 +596,10 @@ function initLessonEditors() {
         images_upload_handler: function (blobInfo) {
             return new Promise(async function (resolve, reject) {
                 try {
+                    const originalBlob = blobInfo.blob();
+                    const compressedBlob = await compressImageBlob(originalBlob);
                     const formData = new FormData();
-                    formData.append('image', blobInfo.blob(), blobInfo.filename());
+                    formData.append('image', compressedBlob, blobInfo.filename());
 
                     const res = await fetch(uploadUrl, {
                         method: 'POST',
