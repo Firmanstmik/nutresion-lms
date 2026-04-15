@@ -112,5 +112,32 @@
 <style>
 .nrl-lesson-content br { display: block; content: ""; margin-top: 0.85rem; }
 .nrl-lesson-content img { max-width: 100%; height: auto; border-radius: 18px; }
+.nrl-lesson-content ul,
+.nrl-lesson-content ol {
+    padding-left: 1.35rem;
+    margin: 0.9rem 0;
+}
+.nrl-lesson-content ul { list-style: disc; }
+.nrl-lesson-content ol { list-style: decimal; }
+.nrl-lesson-content li { margin: 0.35rem 0; }
+.nrl-lesson-content ul ul { list-style: circle; }
+.nrl-lesson-content ol ol { list-style: lower-alpha; }
+.nrl-lesson-content ol ol ol { list-style: lower-roman; }
+.nrl-lesson-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    overflow: hidden;
+    border-radius: 14px;
+}
+.nrl-lesson-content table th,
+.nrl-lesson-content table td {
+    border: 1px solid rgba(229,231,235,1);
+    padding: 0.65rem 0.75rem;
+}
+.nrl-lesson-content table th {
+    background: rgba(243,244,246,1);
+    font-weight: 800;
+}
 </style>
 @endsection
