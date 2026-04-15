@@ -512,8 +512,9 @@ class AdminController extends Controller
     public function results()
     {
         $results = Result::with(['user.school', 'course'])->latest()->get();
+        $schools = School::query()->orderBy('name')->get();
 
-        return view('admin.results.index', compact('results'));
+        return view('admin.results.index', compact('results', 'schools'));
     }
 
     public function resultShow($id)
@@ -553,5 +554,62 @@ class AdminController extends Controller
                 'pass_rate' => $passRate,
             ],
         ]);
+    }
+
+    public function resultsExport(Request $request, $type)
+    {
+        if (! in_array($type, ['pre', 'post'], true)) {
+            abort(404);
+        }
+
+        $schoolId = $request->query('school_id');
+
+        $query = Result::query()
+            ->with(['user.school', 'course'])
+            ->where('type', $type)
+            ->latest();
+
+        if ($schoolId !== null && $schoolId !== '' && $schoolId !== 'all') {
+            if ($schoolId === 'null') {
+                $query->whereHas('user', function ($q) {
+                    $q->whereNull('school_id');
+                });
+            } else {
+                $query->whereHas('user', function ($q) use ($schoolId) {
+                    $q->where('school_id', $schoolId);
+                });
+            }
+        }
+
+        $results = $query->get();
+
+        $filename = 'laporan_'.($type === 'pre' ? 'pretest' : 'posttest').'_'.now()->format('Ymd_His').'.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ];
+
+        return response()->streamDownload(function () use ($results) {
+            $out = fopen('php://output', 'w');
+            fprintf($out, "\xEF\xBB\xBF");
+
+            fputcsv($out, ['No', 'Nama Siswa', 'NISN/Username', 'Sekolah', 'Kursus', 'Skor', 'Tanggal', 'Waktu']);
+
+            $i = 1;
+            foreach ($results as $r) {
+                fputcsv($out, [
+                    $i++,
+                    $r->user?->name,
+                    $r->user?->username,
+                    $r->user?->school?->name ?? 'Institusi Umum',
+                    $r->course?->title,
+                    (int) $r->score,
+                    $r->created_at?->format('d/m/Y'),
+                    $r->created_at?->format('H:i:s'),
+                ]);
+            }
+
+            fclose($out);
+        }, $filename, $headers);
     }
 }

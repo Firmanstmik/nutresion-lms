@@ -130,6 +130,8 @@
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--s-surface);
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 .sp-chart-title {
     font-family: var(--font-display);
@@ -141,6 +143,50 @@
     gap: 0.75rem;
 }
 .sp-chart-title i { color: var(--s-teal); }
+
+.sp-export {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.sp-export-select {
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--s-border);
+    border-radius: 2px;
+    background: var(--s-white);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--s-ink);
+    min-width: 220px;
+}
+.sp-export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.65rem 0.95rem;
+    border-radius: 2px;
+    border: 1px solid var(--s-border);
+    background: var(--s-white);
+    color: var(--s-ink);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.sp-export-btn:hover {
+    border-color: rgba(15,126,110,0.25);
+    background: rgba(15,126,110,0.05);
+    color: var(--s-teal);
+}
+.sp-export-btn-pre:hover {
+    border-color: rgba(217,119,6,0.25);
+    background: rgba(217,119,6,0.06);
+    color: #B45309;
+}
+.sp-export-btn i { font-size: 0.75rem; }
 
 /* ══════════════════════════════════════════════
    STATS STRIP
@@ -402,6 +448,23 @@ tr:last-child .sp-td { border-bottom: none; }
     <div class="sp-chart-card">
         <div class="sp-chart-header">
             <h3 class="sp-chart-title"><i class="fas fa-chart-area"></i> Tren Performa Nilai</h3>
+            <div class="sp-export">
+                <select id="sp-school-filter" class="sp-export-select">
+                    <option value="all">Semua Sekolah</option>
+                    <option value="null">Institusi Umum</option>
+                    @foreach($schools as $school)
+                        <option value="{{ $school->id }}">{{ $school->name }}</option>
+                    @endforeach
+                </select>
+                <a id="sp-export-pre" class="sp-export-btn sp-export-btn-pre" href="{{ route('admin.results.export', ['type' => 'pre']) }}">
+                    <i class="fas fa-download"></i>
+                    Download Pretest
+                </a>
+                <a id="sp-export-post" class="sp-export-btn" href="{{ route('admin.results.export', ['type' => 'post']) }}">
+                    <i class="fas fa-download"></i>
+                    Download Posttest
+                </a>
+            </div>
         </div>
         <div id="resultsChart" style="min-height: 300px;"></div>
     </div>
@@ -600,6 +663,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     refreshTrend();
     setInterval(refreshTrend, 8000);
+
+    const schoolFilterEl = document.getElementById('sp-school-filter');
+    const exportPreEl = document.getElementById('sp-export-pre');
+    const exportPostEl = document.getElementById('sp-export-post');
+
+    function setExportLinks() {
+        const schoolId = schoolFilterEl?.value || 'all';
+        if (exportPreEl) {
+            const base = exportPreEl.getAttribute('href')?.split('?')[0] || '';
+            exportPreEl.setAttribute('href', base + '?school_id=' + encodeURIComponent(schoolId));
+        }
+        if (exportPostEl) {
+            const base = exportPostEl.getAttribute('href')?.split('?')[0] || '';
+            exportPostEl.setAttribute('href', base + '?school_id=' + encodeURIComponent(schoolId));
+        }
+    }
+
+    if (schoolFilterEl) {
+        schoolFilterEl.addEventListener('change', setExportLinks);
+        setExportLinks();
+    }
 });
 </script>
 

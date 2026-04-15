@@ -44,11 +44,11 @@
                 <div class="mt-3 flex flex-wrap items-center gap-3 text-xs font-bold text-text-muted">
                     <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-border-subtle">
                         <i class="fas fa-calendar-alt text-primary text-[11px]"></i>
-                        Diupdate 22 Maret 2026
+                        Diupdate {{ $lesson->updated_at?->format('d M Y') }}
                     </span>
                     <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-border-subtle">
-                        <i class="fas fa-user-tie text-primary text-[11px]"></i>
-                        Oleh Dr. Sarah Smith
+                        <i class="fas fa-book text-primary text-[11px]"></i>
+                        {{ $lesson->course->title }}
                     </span>
                 </div>
             </div>
@@ -69,6 +69,24 @@
                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                             Bab {{ $lesson->order_number }}
                         </span>
+                    </div>
+                    <div class="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                        <div class="text-white">
+                            <div class="text-[10px] font-black uppercase tracking-widest opacity-70">Materi</div>
+                            <div class="mt-1 text-lg sm:text-2xl font-extrabold tracking-tight leading-tight">
+                                {{ $lesson->title }}
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/10 border border-white/20 backdrop-blur text-[10px] font-black uppercase tracking-widest text-white">
+                                <i class="fas fa-layer-group text-[10px]"></i>
+                                {{ $lesson->course->lessons->count() }} Bab
+                            </span>
+                            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/10 border border-white/20 backdrop-blur text-[10px] font-black uppercase tracking-widest text-white">
+                                <i class="fas fa-clock text-[10px]"></i>
+                                Estimasi 5–8 Menit
+                            </span>
+                        </div>
                     </div>
                 @endif
             </div>
