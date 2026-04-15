@@ -522,4 +522,36 @@ class AdminController extends Controller
 
         return view('student.results.show', compact('result'));
     }
+
+    public function resultsTrendData()
+    {
+        $latest = Result::with('user')->latest()->take(10)->get()->reverse()->values();
+
+        $labels = $latest->map(function ($r) {
+            $name = $r->user?->name ?? 'Siswa';
+
+            return explode(' ', trim($name))[0] ?: 'Siswa';
+        });
+
+        $scores = $latest->pluck('score')->map(function ($s) {
+            return (int) $s;
+        });
+
+        $total = Result::count();
+        $avg = (int) round((float) (Result::avg('score') ?? 0));
+        $max = (int) (Result::max('score') ?? 0);
+        $pass = Result::where('score', '>=', 70)->count();
+        $passRate = $total > 0 ? (int) round(($pass / $total) * 100) : 0;
+
+        return response()->json([
+            'labels' => $labels,
+            'scores' => $scores,
+            'stats' => [
+                'total' => $total,
+                'avg' => $avg,
+                'max' => $max,
+                'pass_rate' => $passRate,
+            ],
+        ]);
+    }
 }

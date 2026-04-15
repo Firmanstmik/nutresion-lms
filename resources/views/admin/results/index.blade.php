@@ -376,24 +376,24 @@ tr:last-child .sp-td { border-bottom: none; }
     <div class="sp-stats">
         <div class="sp-stat-item">
             <span class="sp-stat-label">Rata-rata Skor</span>
-            <span class="sp-stat-value">{{ round($results->avg('score')) }}</span>
+            <span class="sp-stat-value" id="sp-stat-avg">{{ str_pad((string) round($results->avg('score')), 3, '0', STR_PAD_LEFT) }}</span>
             <span class="sp-stat-unit">Poin</span>
         </div>
         <div class="sp-stat-item">
             <span class="sp-stat-label">Total Ujian</span>
-            <span class="sp-stat-value">{{ str_pad($results->count(), 3, '0', STR_PAD_LEFT) }}</span>
+            <span class="sp-stat-value" id="sp-stat-total">{{ str_pad($results->count(), 3, '0', STR_PAD_LEFT) }}</span>
             <span class="sp-stat-unit">Selesai</span>
         </div>
         <div class="sp-stat-item">
             <span class="sp-stat-label">Tingkat Kelulusan</span>
-            <span class="sp-stat-value">
+            <span class="sp-stat-value" id="sp-stat-passrate">
                 {{ $results->count() > 0 ? round(($results->where('score', '>=', 70)->count() / $results->count()) * 100) : 0 }}%
             </span>
             <span class="sp-stat-unit">Lulus</span>
         </div>
         <div class="sp-stat-item">
             <span class="sp-stat-label">Skor Tertinggi</span>
-            <span class="sp-stat-value">{{ $results->max('score') ?? '00' }}</span>
+            <span class="sp-stat-value" id="sp-stat-max">{{ str_pad((string) ($results->max('score') ?? 0), 3, '0', STR_PAD_LEFT) }}</span>
             <span class="sp-stat-unit">Poin</span>
         </div>
     </div>
@@ -486,6 +486,8 @@ tr:last-child .sp-td { border-bottom: none; }
     </div>
 </div>
 
+<div id="resultsTrendConfig" data-url="{{ route('admin.results.trend-data') }}" style="display:none;"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -563,6 +565,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const chart = new ApexCharts(document.querySelector("#resultsChart"), options);
     chart.render();
+
+    const trendUrl = document.getElementById('resultsTrendConfig')?.dataset?.url || '';
+    const statAvgEl = document.getElementById('sp-stat-avg');
+    const statTotalEl = document.getElementById('sp-stat-total');
+    const statPassEl = document.getElementById('sp-stat-passrate');
+    const statMaxEl = document.getElementById('sp-stat-max');
+
+    function pad3(n) {
+        return String(n ?? 0).padStart(3, '0');
+    }
+
+    async function refreshTrend() {
+        if (!trendUrl) return;
+        try {
+            const res = await fetch(trendUrl, { headers: { Accept: 'application/json' } });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            const labels = Array.isArray(data?.labels) ? data.labels : [];
+            const scores = Array.isArray(data?.scores) ? data.scores : [];
+
+            chart.updateSeries([{ name: 'Skor Siswa', data: scores }], true);
+            chart.updateOptions({ xaxis: { categories: labels } }, false, true);
+
+            const stats = data?.stats || {};
+            if (statAvgEl) statAvgEl.textContent = pad3(stats.avg);
+            if (statTotalEl) statTotalEl.textContent = pad3(stats.total);
+            if (statPassEl) statPassEl.textContent = String(stats.pass_rate ?? 0) + '%';
+            if (statMaxEl) statMaxEl.textContent = pad3(stats.max);
+        } catch (e) {
+        }
+    }
+
+    refreshTrend();
+    setInterval(refreshTrend, 8000);
 });
 </script>
 
