@@ -144,6 +144,16 @@
 }
 .sp-chart-title i { color: var(--s-teal); }
 
+.sp-chart-card #resultsChart { min-height: 300px; }
+@media (max-width: 639px) {
+    .sp-chart-card #resultsChart { min-height: 240px; }
+    .sp-export-select { min-width: 100%; }
+    .sp-export { width: 100%; }
+    .sp-export-dd { width: 100%; }
+    .sp-export-trigger { width: 100%; justify-content: space-between; }
+    .sp-export-menu { width: 100%; left: 0; right: 0; }
+}
+
 .sp-live {
     display: inline-flex;
     align-items: center;
@@ -781,13 +791,27 @@ document.addEventListener('DOMContentLoaded', function() {
         grid: {
             borderColor: '#F1F1F1',
             padding: { left: 10, right: 10 }
-        }
+        },
+        responsive: [
+            {
+                breakpoint: 640,
+                options: {
+                    chart: { height: 260 },
+                    stroke: { width: 3 },
+                    markers: { size: 3 },
+                    xaxis: {
+                        labels: { rotate: -45 },
+                    },
+                },
+            },
+        ],
     };
 
     const chart = new ApexCharts(document.querySelector("#resultsChart"), options);
     chart.render();
 
     const trendUrl = document.getElementById('resultsTrendConfig')?.dataset?.url || '';
+    const schoolFilterEl = document.getElementById('sp-school-filter');
     const statAvgEl = document.getElementById('sp-stat-avg');
     const statTotalEl = document.getElementById('sp-stat-total');
     const statPassEl = document.getElementById('sp-stat-passrate');
@@ -830,7 +854,6 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshTrend();
     setInterval(refreshTrend, 5000);
 
-    const schoolFilterEl = document.getElementById('sp-school-filter');
     const preTrigger = document.getElementById('sp-export-pre-trigger');
     const preMenu = document.getElementById('sp-export-pre-menu');
     const preExcel = document.getElementById('sp-export-pre-excel');

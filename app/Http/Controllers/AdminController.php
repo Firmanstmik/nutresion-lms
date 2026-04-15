@@ -602,11 +602,10 @@ class AdminController extends Controller
             }
         }
 
-        $results = $query->get();
-
         $baseName = 'laporan_'.($type === 'pre' ? 'pretest' : 'posttest').'_'.now()->format('Ymd_His');
 
         if ($format === 'csv') {
+            $results = $query->get();
             $filename = $baseName.'.csv';
             $headers = [
                 'Content-Type' => 'text/csv; charset=UTF-8',
@@ -636,6 +635,84 @@ class AdminController extends Controller
             }, $filename, $headers);
         }
 
+        if ($format === 'pdf') {
+            if (! class_exists(Dompdf::class)) {
+                abort(500, 'PDF export belum tersedia (dompdf belum terpasang).');
+            }
+
+            $totalCount = (int) $query->count();
+            $limit = 250;
+
+            set_time_limit(120);
+            Storage::disk('local')->makeDirectory('dompdf');
+
+            $results = $query->take($limit)->get();
+
+            $rows = [];
+            $i = 1;
+            foreach ($results as $r) {
+                $rows[] = [
+                    'no' => $i++,
+                    'name' => (string) ($r->user?->name ?? ''),
+                    'username' => (string) ($r->user?->username ?? ''),
+                    'school' => (string) ($r->user?->school?->name ?? 'Institusi Umum'),
+                    'course' => (string) ($r->course?->title ?? ''),
+                    'score' => (int) ($r->score ?? 0),
+                    'date' => (string) ($r->created_at?->format('d/m/Y') ?? ''),
+                    'time' => (string) ($r->created_at?->format('H:i:s') ?? ''),
+                ];
+            }
+
+            $title = 'Laporan '.($type === 'pre' ? 'Pre Test' : 'Post Test');
+            $html = '<!doctype html><html><head><meta charset="utf-8"><style>
+                body{font-family:DejaVu Sans, Arial, sans-serif;font-size:12px;color:#111827}
+                h1{font-size:16px;margin:0 0 10px}
+                table{width:100%;border-collapse:collapse}
+                th,td{border:1px solid #E5E7EB;padding:6px 8px;vertical-align:top}
+                th{background:#F3F4F6;font-weight:700}
+                .muted{color:#6B7280;font-size:11px;margin:0 0 12px}
+            </style></head><body>';
+            $html .= '<h1>'.$title.'</h1>';
+            $html .= '<div class="muted">Diunduh: '.now()->format('d/m/Y H:i:s').'</div>';
+            if ($totalCount > $limit) {
+                $html .= '<div class="muted">Catatan: PDF dibatasi '.$limit.' baris (dari total '.$totalCount.' data). Gunakan Excel untuk data lengkap.</div>';
+            }
+            $html .= '<table><thead><tr>
+                <th>No</th><th>Nama Siswa</th><th>NISN/Username</th><th>Sekolah</th><th>Kursus</th><th>Skor</th><th>Tanggal</th><th>Waktu</th>
+            </tr></thead><tbody>';
+            foreach ($rows as $row) {
+                $html .= '<tr>'
+                    .'<td>'.$row['no'].'</td>'
+                    .'<td>'.e($row['name']).'</td>'
+                    .'<td>'.e($row['username']).'</td>'
+                    .'<td>'.e($row['school']).'</td>'
+                    .'<td>'.e($row['course']).'</td>'
+                    .'<td>'.$row['score'].'</td>'
+                    .'<td>'.e($row['date']).'</td>'
+                    .'<td>'.e($row['time']).'</td>'
+                    .'</tr>';
+            }
+            $html .= '</tbody></table></body></html>';
+
+            $options = new Options;
+            $options->set('isRemoteEnabled', false);
+            $options->set('tempDir', storage_path('app/dompdf'));
+            $options->set('isHtml5ParserEnabled', true);
+
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
+
+            $filename = $baseName.'.pdf';
+
+            return response($dompdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]);
+        }
+
+        $results = $query->get();
         $rows = [];
         $i = 1;
         foreach ($results as $r) {
@@ -678,41 +755,6 @@ class AdminController extends Controller
                 .'</tr>';
         }
         $html .= '</tbody></table></body></html>';
-
-        if ($format === 'pdf') {
-            $count = $results->count();
-            if (($schoolId === null || $schoolId === '' || $schoolId === 'all') && $count > 250) {
-                return redirect()
-                    ->route('admin.results.index')
-                    ->with('error', 'PDF terlalu besar untuk semua sekolah. Pilih sekolah terlebih dahulu agar PDF bisa diunduh.');
-            }
-            if ($count > 800) {
-                return redirect()
-                    ->route('admin.results.index')
-                    ->with('error', 'PDF terlalu besar. Perkecil filter sekolah agar data tidak terlalu banyak.');
-            }
-
-            if (! class_exists(Dompdf::class)) {
-                abort(500, 'PDF export belum tersedia (dompdf belum terpasang).');
-            }
-            set_time_limit(120);
-            Storage::disk('local')->makeDirectory('dompdf');
-            $options = new Options;
-            $options->set('isRemoteEnabled', false);
-            $options->set('tempDir', storage_path('app/dompdf'));
-            $options->set('isHtml5ParserEnabled', true);
-            $dompdf = new Dompdf($options);
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4', 'landscape');
-            $dompdf->render();
-
-            $filename = $baseName.'.pdf';
-
-            return response($dompdf->output(), 200, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-            ]);
-        }
 
         $filename = $baseName.'.xls';
 
