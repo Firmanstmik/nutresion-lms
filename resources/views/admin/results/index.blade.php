@@ -727,6 +727,7 @@ function initAdminResultsPage() {
     } catch (e) {
         resultsData = [];
     }
+    let trendTypes = (Array.isArray(resultsData) ? resultsData : []).map(r => (r?.type === 'pre' ? 'pre' : 'post'));
     
     const options = {
         series: [{
@@ -793,7 +794,28 @@ function initAdminResultsPage() {
         },
         tooltip: {
             theme: 'dark',
-            y: { formatter: (val) => val + " Poin" }
+            custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+                const score = series?.[seriesIndex]?.[dataPointIndex] ?? 0;
+                const name = w?.globals?.categoryLabels?.[dataPointIndex] ?? 'Siswa';
+                const t = trendTypes?.[dataPointIndex] || 'post';
+                const label = t === 'pre' ? 'Pre Test' : 'Post Test';
+                const pillBg = t === 'pre' ? 'rgba(217,119,6,0.18)' : 'rgba(15,126,110,0.18)';
+                const pillText = t === 'pre' ? '#FDBA74' : '#5EEAD4';
+
+                return `
+                    <div style="padding:10px 12px;min-width:180px;">
+                        <div style="font-weight:900;font-size:13px;color:#fff;letter-spacing:-0.01em;">${name}</div>
+                        <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                            <div style="font-weight:900;font-size:12px;color:#E5E7EB;">
+                                Skor: <span style="color:#fff;">${score} Poin</span>
+                            </div>
+                            <div style="padding:4px 8px;border-radius:999px;background:${pillBg};color:${pillText};font-weight:900;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;">
+                                ${label}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
         },
         grid: {
             borderColor: '#F1F1F1',
@@ -841,6 +863,7 @@ function initAdminResultsPage() {
 
             const labels = Array.isArray(data?.labels) ? data.labels : [];
             const scores = Array.isArray(data?.scores) ? data.scores : [];
+            trendTypes = Array.isArray(data?.types) ? data.types.map((t) => (t === 'pre' ? 'pre' : 'post')) : trendTypes;
 
             const numericScores = scores.filter((n) => typeof n === 'number' && !Number.isNaN(n));
             const minScore = numericScores.length ? Math.min(...numericScores) : 0;

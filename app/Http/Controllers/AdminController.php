@@ -554,6 +554,9 @@ class AdminController extends Controller
         $scores = $latest->pluck('score')->map(function ($s) {
             return (int) $s;
         });
+        $types = $latest->pluck('type')->map(function ($t) {
+            return $t === 'pre' ? 'pre' : 'post';
+        });
 
         $total = (int) $baseQuery->clone()->count();
         $avg = (int) round((float) ($baseQuery->clone()->avg('score') ?? 0));
@@ -564,6 +567,7 @@ class AdminController extends Controller
         return response()->json([
             'labels' => $labels,
             'scores' => $scores,
+            'types' => $types,
             'stats' => [
                 'total' => $total,
                 'avg' => $avg,
