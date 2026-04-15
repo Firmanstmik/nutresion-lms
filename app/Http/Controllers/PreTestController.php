@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
-use App\Models\Result;
 use App\Models\Notification;
+use App\Models\Result;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -35,10 +35,11 @@ class PreTestController extends Controller
                 ->with('info', 'Kamu sudah mengerjakan Pretest untuk kursus ini.');
         }
 
-        // Durasi timer: 30 menit (dalam detik)
-        $duration_seconds = 30 * 60;
+        $question_count = $course->preQuestions->count();
+        $duration_minutes = max(1, $question_count);
+        $duration_seconds = $duration_minutes * 60;
 
-        return view('student.tests.pretest', compact('course', 'duration_seconds'));
+        return view('student.tests.pretest', compact('course', 'duration_seconds', 'duration_minutes', 'question_count'));
     }
 
     /**
@@ -60,7 +61,7 @@ class PreTestController extends Controller
         $total_questions = $questions->count();
 
         foreach ($questions as $question) {
-            $answer_key = 'question_' . $question->id;
+            $answer_key = 'question_'.$question->id;
             if ($request->has($answer_key) && $request->input($answer_key) === $question->correct_answer) {
                 $score++;
             }
@@ -70,23 +71,23 @@ class PreTestController extends Controller
         $rounded_score = round($final_score);
 
         $result = Result::create([
-            'user_id'   => $user_id,
+            'user_id' => $user_id,
             'course_id' => $course_id,
-            'score'     => $rounded_score,
-            'type'      => 'pre',
+            'score' => $rounded_score,
+            'type' => 'pre',
         ]);
 
         // Notifikasi
         Notification::create([
-            'user_id'    => $user_id,
-            'title'      => "Pre Test Selesai: " . $course->title,
-            'message'    => "Kamu telah menyelesaikan Pre Test untuk " . $course->title . " dengan nilai " . $rounded_score . ". Sekarang kamu bisa mulai belajar!",
-            'type'       => 'course',
+            'user_id' => $user_id,
+            'title' => 'Pre Test Selesai: '.$course->title,
+            'message' => 'Kamu telah menyelesaikan Pre Test untuk '.$course->title.' dengan nilai '.$rounded_score.'. Sekarang kamu bisa mulai belajar!',
+            'type' => 'course',
             'action_url' => route('courses.detail', $course_id),
-            'is_read'    => false,
+            'is_read' => false,
         ]);
 
         return redirect()->route('courses.detail', $course_id)
-            ->with('success', 'Pre Test selesai! Nilai kamu: ' . $rounded_score . '. Selamat belajar!');
+            ->with('success', 'Pre Test selesai! Nilai kamu: '.$rounded_score.'. Selamat belajar!');
     }
 }

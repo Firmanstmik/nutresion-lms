@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('questions', function (Blueprint $table) {
-            if (!Schema::hasColumn('questions', 'type')) {
+            if (! Schema::hasColumn('questions', 'type')) {
                 $table->string('type')->default('post')->after('correct_answer');
             }
         });

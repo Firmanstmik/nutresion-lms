@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lesson;
+use App\Models\Notification;
 use App\Models\Result;
 use App\Models\UserProgress;
-use App\Models\Notification;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LessonController extends Controller
@@ -25,7 +24,7 @@ class LessonController extends Controller
                 ->where('type', 'pre')
                 ->exists();
 
-            if (!$pretest_done) {
+            if (! $pretest_done) {
                 return redirect()->route('tests.pre.index', $lesson->course_id)
                     ->with('warning', 'Kamu harus mengerjakan Pre Test terlebih dahulu sebelum mengakses materi.');
             }
@@ -34,7 +33,7 @@ class LessonController extends Controller
         $progress = UserProgress::where('user_id', $user_id)
             ->where('lesson_id', $id)
             ->first();
-        
+
         $is_completed = $progress ? $progress->is_completed : false;
 
         return view('student.lessons.show', compact('lesson', 'is_completed'));
@@ -58,13 +57,13 @@ class LessonController extends Controller
             ->first();
 
         if ($nextLesson) {
-            $title = "Bab " . $lesson->order_number . " Selesai!";
-            $message = "Selamat! Kamu telah menyelesaikan Bab " . $lesson->order_number . ": " . $lesson->title . ". Ayo lanjut ke Bab berikutnya: " . $nextLesson->title . "!";
+            $title = 'Bab '.$lesson->order_number.' Selesai!';
+            $message = 'Selamat! Kamu telah menyelesaikan Bab '.$lesson->order_number.': '.$lesson->title.'. Ayo lanjut ke Bab berikutnya: '.$nextLesson->title.'!';
             $action_url = route('lessons.show', $nextLesson->id);
             $type = 'course';
         } else {
-            $title = "Materi Tuntas!";
-            $message = "Selamat! Kamu telah menyelesaikan semua materi di " . $course->title . ". Ayo ambil Post Test sekarang untuk mendapatkan nilai!";
+            $title = 'Materi Tuntas!';
+            $message = 'Selamat! Kamu telah menyelesaikan semua materi di '.$course->title.'. Ayo ambil Post Test sekarang untuk mendapatkan nilai!';
             $action_url = route('tests.index', $course->id);
             $type = 'result';
         }

@@ -9,6 +9,7 @@ use App\Models\Question;
 use App\Models\Result;
 use App\Models\School;
 use App\Models\User;
+use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -82,7 +83,51 @@ class AdminController extends Controller
         $students = User::where('role', 'student')->with('school')->get();
         $schools = School::all();
 
-        return view('admin.students.index', compact('students', 'schools'));
+        $schoolIds = $students->pluck('school_id')->unique()->values();
+        $totalLessonsBySchoolId = [];
+        foreach ($schoolIds as $schoolId) {
+            $key = $schoolId === null ? 'null' : (string) $schoolId;
+
+            $totalLessonsBySchoolId[$key] = Lesson::query()
+                ->whereHas('course', function ($q) use ($schoolId) {
+                    $q->whereNull('school_id');
+                    if ($schoolId !== null) {
+                        $q->orWhere('school_id', $schoolId);
+                    }
+                })
+                ->count();
+        }
+
+        $completedCountsByUserId = UserProgress::query()
+            ->select('user_progress.user_id')
+            ->selectRaw('COUNT(*) as completed_count')
+            ->join('lessons', 'lessons.id', '=', 'user_progress.lesson_id')
+            ->join('courses', 'courses.id', '=', 'lessons.course_id')
+            ->join('users', 'users.id', '=', 'user_progress.user_id')
+            ->whereIn('user_progress.user_id', $students->pluck('id')->all())
+            ->where('user_progress.is_completed', true)
+            ->where(function ($q) {
+                $q->whereNull('courses.school_id')
+                    ->orWhereColumn('courses.school_id', 'users.school_id');
+            })
+            ->groupBy('user_progress.user_id')
+            ->pluck('completed_count', 'user_progress.user_id');
+
+        $progressByStudentId = [];
+        foreach ($students as $student) {
+            $key = $student->school_id === null ? 'null' : (string) $student->school_id;
+            $total = (int) ($totalLessonsBySchoolId[$key] ?? 0);
+            $completed = (int) ($completedCountsByUserId[$student->id] ?? 0);
+            $pct = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
+
+            $progressByStudentId[$student->id] = [
+                'completed' => $completed,
+                'total' => $total,
+                'pct' => $pct,
+            ];
+        }
+
+        return view('admin.students.index', compact('students', 'schools', 'progressByStudentId'));
     }
 
     public function storeStudent(Request $request)
@@ -136,6 +181,81 @@ class AdminController extends Controller
         $user->delete();
 
         return back()->with('success', 'Student deleted successfully');
+    }
+
+    public function studentActivity($id)
+    {
+        $student = User::where('role', 'student')->with('school')->findOrFail($id);
+
+        $coursesQuery = Course::query()->with(['lessons']);
+        if ($student->school_id) {
+            $coursesQuery->where(function ($q) use ($student) {
+                $q->whereNull('school_id')->orWhere('school_id', $student->school_id);
+            });
+        }
+        $courses = $coursesQuery->orderBy('title')->get();
+
+        $lessonIds = $courses->pluck('lessons')->flatten()->pluck('id')->all();
+
+        $progressByLessonId = UserProgress::query()
+            ->where('user_id', $student->id)
+            ->whereIn('lesson_id', $lessonIds)
+            ->get()
+            ->keyBy('lesson_id');
+
+        $results = Result::query()
+            ->where('user_id', $student->id)
+            ->whereIn('course_id', $courses->pluck('id')->all())
+            ->get();
+
+        $resultsByCourse = [];
+        foreach ($results as $result) {
+            $type = $result->type ?: 'post';
+            $resultsByCourse[$result->course_id][$type] = $result;
+        }
+
+        return view('admin.students.activity', compact(
+            'student',
+            'courses',
+            'progressByLessonId',
+            'resultsByCourse'
+        ));
+    }
+
+    public function resetStudentActivityAll($id)
+    {
+        $student = User::where('role', 'student')->findOrFail($id);
+
+        UserProgress::where('user_id', $student->id)->delete();
+        Result::where('user_id', $student->id)->delete();
+
+        return back()->with('success', 'Aktivitas siswa berhasil direset (semua).');
+    }
+
+    public function resetStudentActivityCourse($id, $course_id)
+    {
+        $student = User::where('role', 'student')->findOrFail($id);
+        $course = Course::with('lessons')->findOrFail($course_id);
+
+        $lessonIds = $course->lessons->pluck('id')->all();
+
+        if (count($lessonIds) > 0) {
+            UserProgress::where('user_id', $student->id)->whereIn('lesson_id', $lessonIds)->delete();
+        }
+
+        Result::where('user_id', $student->id)->where('course_id', $course->id)->delete();
+
+        return back()->with('success', 'Aktivitas kursus berhasil direset.');
+    }
+
+    public function resetStudentActivityLesson($id, $lesson_id)
+    {
+        $student = User::where('role', 'student')->findOrFail($id);
+        Lesson::findOrFail($lesson_id);
+
+        UserProgress::where('user_id', $student->id)->where('lesson_id', $lesson_id)->delete();
+
+        return back()->with('success', 'Aktivitas bab berhasil direset.');
     }
 
     // Course Management
@@ -272,6 +392,7 @@ class AdminController extends Controller
     {
         $course = Course::findOrFail($course_id);
         $questions = Question::where('course_id', $course_id)->where('type', 'post')->get();
+
         return view('admin.questions.index', compact('course', 'questions'));
     }
 
@@ -279,6 +400,7 @@ class AdminController extends Controller
     {
         $course = Course::findOrFail($course_id);
         $questions = Question::where('course_id', $course_id)->where('type', 'pre')->get();
+
         return view('admin.pre_questions.index', compact('course', 'questions'));
     }
 

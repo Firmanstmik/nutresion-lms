@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Lesson;
-use App\Models\UserProgress;
 use App\Models\Result;
+use App\Models\UserProgress;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -46,7 +46,7 @@ class DashboardController extends Controller
 
         $calendarCourseId = $request->query('calendar_course');
         $calendarCourseId = is_numeric($calendarCourseId) ? (int) $calendarCourseId : null;
-        if ($calendarCourseId !== null && !in_array($calendarCourseId, $availableCourseIds, true)) {
+        if ($calendarCourseId !== null && ! in_array($calendarCourseId, $availableCourseIds, true)) {
             $calendarCourseId = null;
         }
 
@@ -70,7 +70,7 @@ class DashboardController extends Controller
         $calendarTestsByDay = collect();
         $calendarAgenda = [];
 
-        if (!empty($calendarCourseIds)) {
+        if (! empty($calendarCourseIds)) {
             $calendarLessonsOpenedByDay = Lesson::query()
                 ->whereIn('course_id', $calendarCourseIds)
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
@@ -126,13 +126,13 @@ class DashboardController extends Controller
 
             foreach ($doneProgress as $progress) {
                 $lesson = $progress->lesson;
-                if (!$lesson || !in_array($lesson->course_id, $calendarCourseIds, true)) {
+                if (! $lesson || ! in_array($lesson->course_id, $calendarCourseIds, true)) {
                     continue;
                 }
                 $calendarAgenda[] = [
                     'ts' => $progress->updated_at,
                     'type' => 'Selesai',
-                    'title' => 'Bab ' . $lesson->order_number . ': ' . $lesson->title,
+                    'title' => 'Bab '.$lesson->order_number.': '.$lesson->title,
                     'meta' => $lesson->course?->title,
                     'url' => route('lessons.show', $lesson->id),
                 ];
@@ -151,7 +151,7 @@ class DashboardController extends Controller
                     'ts' => $test->created_at,
                     'type' => 'Post-test',
                     'title' => $test->course?->title,
-                    'meta' => 'Skor: ' . $test->score,
+                    'meta' => 'Skor: '.$test->score,
                     'url' => route('results.show', $test->id),
                 ];
             }

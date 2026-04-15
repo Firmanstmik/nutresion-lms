@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('results', function (Blueprint $table) {
-            if (!Schema::hasColumn('results', 'type')) {
+            if (! Schema::hasColumn('results', 'type')) {
                 $table->enum('type', ['pre', 'post'])->default('post')->after('score');
             }
         });

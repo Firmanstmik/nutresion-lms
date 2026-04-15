@@ -386,6 +386,27 @@ tr:hover .sp-nisn-chip {
     color: var(--s-blue);
 }
 
+/* Progress chip */
+.sp-progress-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    background: rgba(15,126,110,0.05);
+    border: 1px solid rgba(15,126,110,0.14);
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--s-teal);
+    letter-spacing: 0.06em;
+    transition: all 0.2s ease;
+}
+tr:hover .sp-progress-chip {
+    background: rgba(15,126,110,0.08);
+    border-color: rgba(15,126,110,0.22);
+}
+
 /* School cell */
 .sp-school-cell {
     display: flex;
@@ -443,6 +464,7 @@ tr:hover .sp-school-name { color: var(--s-ink); }
     transition: all 0.2s ease;
 }
 .sp-action-edit:hover { color: var(--s-teal); border-color: var(--s-teal-lt); background: rgba(15,126,110,0.05); }
+.sp-action-activity:hover { color: var(--s-blue); border-color: rgba(30,64,175,0.35); background: rgba(30,64,175,0.04); }
 .sp-action-del:hover  { color: var(--s-red);  border-color: rgba(192,17,30,0.3); background: rgba(192,17,30,0.04); }
 
 /* Empty */
@@ -605,6 +627,8 @@ tr:hover .sp-school-name { color: var(--s-ink); }
 }
 .sp-card-btn-edit { color: var(--s-teal); }
 .sp-card-btn-edit:hover { background: rgba(15,126,110,0.06); border-color: var(--s-teal-lt); }
+.sp-card-btn-activity { color: var(--s-blue); }
+.sp-card-btn-activity:hover { background: rgba(30,64,175,0.05); border-color: rgba(30,64,175,0.35); }
 .sp-card-btn-del  { color: var(--s-red); }
 .sp-card-btn-del:hover  { background: rgba(192,17,30,0.05); border-color: rgba(192,17,30,0.3); }
 
@@ -896,11 +920,13 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                     <th class="sp-th">Nama Peserta</th>
                     <th class="sp-th">NISN / Username</th>
                     <th class="sp-th">Asal Lembaga</th>
+                    <th class="sp-th" style="width:180px">Progress</th>
                     <th class="sp-th" style="text-align:right">Tindakan</th>
                 </tr>
             </thead>
             <tbody class="sp-tbody">
                 @forelse($students as $student)
+                @php $p = $progressByStudentId[$student->id] ?? ['completed' => 0, 'total' => 0, 'pct' => 0]; @endphp
                 <tr>
                     <td class="sp-td">
                         <span class="sp-row-num">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
@@ -926,6 +952,16 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                             <span class="sp-school-name">{{ $student->school->name ?? 'Belum Ditetapkan' }}</span>
                         </div>
                     </td>
+                    <td class="sp-td">
+                        @if(($p['total'] ?? 0) > 0)
+                            <span class="sp-progress-chip" title="{{ $p['pct'] ?? 0 }}%">
+                                <i class="fas fa-list-check" style="font-size:0.55rem"></i>
+                                {{ $p['completed'] }}/{{ $p['total'] }} Bab
+                            </span>
+                        @else
+                            <span style="color:rgba(107,114,128,0.7);font-weight:600;">—</span>
+                        @endif
+                    </td>
                     <td class="sp-td sp-td-actions">
                         <div class="sp-actions-group">
                             <button onclick="editStudent(this)"
@@ -937,6 +973,11 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                                     title="Edit">
                                 <i class="fas fa-pen"></i>
                             </button>
+                            <a href="{{ route('admin.students.activity', $student->id) }}"
+                               class="sp-action-btn sp-action-activity"
+                               title="Aktivitas">
+                                <i class="fas fa-chart-line"></i>
+                            </a>
                             <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST"
                                   onsubmit="return confirm('Apakah Anda yakin ingin menghapus siswa ini?')"
                                   style="display:contents">
@@ -951,7 +992,7 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="sp-empty">
+                    <td colspan="6" class="sp-empty">
                         <div class="sp-empty-icon"><i class="fas fa-user-graduate"></i></div>
                         <div class="sp-empty-text">Belum ada data peserta yang tercatat.</div>
                     </td>
@@ -964,6 +1005,7 @@ tr:hover .sp-school-name { color: var(--s-ink); }
     {{-- ═══ MOBILE CARDS ════════════════════════════ --}}
     <div class="sp-mobile-grid">
         @forelse($students as $student)
+        @php $p = $progressByStudentId[$student->id] ?? ['completed' => 0, 'total' => 0, 'pct' => 0]; @endphp
         <div class="sp-card">
             <div class="sp-card-accent"></div>
             <div class="sp-card-inner">
@@ -973,6 +1015,10 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                     <div class="sp-card-nisn">
                         <i class="fas fa-id-badge"></i>
                         NISN: {{ $student->username }}
+                    </div>
+                    <div class="sp-card-nisn">
+                        <i class="fas fa-list-check"></i>
+                        Progress: {{ ($p['total'] ?? 0) > 0 ? ($p['completed'].'/'.$p['total'].' Bab') : '—' }}
                     </div>
                 </div>
             </div>
@@ -993,6 +1039,10 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                             class="sp-card-btn sp-card-btn-edit">
                         <i class="fas fa-pen"></i>
                     </button>
+                    <a href="{{ route('admin.students.activity', $student->id) }}"
+                       class="sp-card-btn sp-card-btn-activity">
+                        <i class="fas fa-chart-line"></i>
+                    </a>
                     <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST"
                           onsubmit="return confirm('Apakah Anda yakin ingin menghapus siswa ini?')"
                           style="display:contents">

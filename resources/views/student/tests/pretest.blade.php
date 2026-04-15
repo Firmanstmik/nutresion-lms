@@ -13,7 +13,7 @@
             </div>
             <div class="pt-timer-info">
                 <span class="pt-timer-label">WAKTU TERSISA</span>
-                <span class="pt-timer-display" id="pt-timer-display">30:00</span>
+                <span class="pt-timer-display" id="pt-timer-display">00:00</span>
             </div>
         </div>
         <div class="pt-timer-right">
@@ -21,7 +21,7 @@
                 <div class="pt-progress-track">
                     <div class="pt-progress-fill" id="pt-progress-fill"></div>
                 </div>
-                <span class="pt-progress-label" id="pt-progress-label">100%</span>
+                <span class="pt-progress-label" id="pt-progress-label">0/{{ $course->preQuestions->count() }}</span>
             </div>
             <div class="pt-course-info">
                 <i class="fas fa-book-open"></i>
@@ -57,7 +57,7 @@
                 </div>
                 <div>
                     <p class="pt-meta-label">Durasi</p>
-                    <p class="pt-meta-val">30 Menit</p>
+                    <p class="pt-meta-val">{{ $duration_minutes }} Menit</p>
                 </div>
             </div>
             <div class="pt-meta-card">
@@ -77,8 +77,12 @@
 <div class="pt-content">
     <form id="pt-form"
           action="{{ route('tests.pre.submit', $course->id) }}"
-          method="POST">
+          method="POST"
+          data-total-seconds="{{ $duration_seconds }}"
+          data-course-id="{{ $course->id }}"
+          data-question-count="{{ $course->preQuestions->count() }}">
         @csrf
+        <input type="hidden" name="is_timeout" id="pt-is-timeout" value="0">
 
         @foreach($course->preQuestions as $question)
         <div class="pt-question-card" style="--qi: {{ $loop->index }}">
@@ -479,15 +483,22 @@
 {{-- ═══════════════════════════════ SCRIPTS ═══════════════════════════════ --}}
 <script>
 (function () {
-    const TOTAL_SECONDS = {{ $duration_seconds }};
-    let remaining = TOTAL_SECONDS;
+    const formEl = document.getElementById('pt-form');
+    const TOTAL_SECONDS = Number(formEl?.dataset?.totalSeconds || '0');
+    const courseId = Number(formEl?.dataset?.courseId || '0');
+    const questionCount = Number(formEl?.dataset?.questionCount || '0');
+    const storageKey = 'pretest_end_' + courseId;
+    const now = Date.now();
+    const storedEnd = Number(sessionStorage.getItem(storageKey) || '0');
+    const endTime = storedEnd > now ? storedEnd : (now + (TOTAL_SECONDS * 1000));
+    sessionStorage.setItem(storageKey, String(endTime));
 
     const displayEl  = document.getElementById('pt-timer-display');
     const fillEl     = document.getElementById('pt-progress-fill');
     const labelEl    = document.getElementById('pt-progress-label');
-    const formEl     = document.getElementById('pt-form');
     const modalEl    = document.getElementById('pt-timeout-modal');
     const hourglassEl= document.getElementById('pt-hourglass-icon');
+    const timeoutInputEl = document.getElementById('pt-is-timeout');
 
     function formatTime(s) {
         const m = Math.floor(s / 60);
@@ -495,25 +506,36 @@
         return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
     }
 
+    function computeRemaining() {
+        const diff = Math.floor((endTime - Date.now()) / 1000);
+        return Math.max(0, diff);
+    }
+
+    function answeredCount() {
+        return document.querySelectorAll('#pt-form input[type="radio"]:checked').length;
+    }
+
     function updateUI() {
-        const pct = Math.max(0, (remaining / TOTAL_SECONDS) * 100);
+        const remaining = computeRemaining();
+        const answered = answeredCount();
+        const pct = questionCount > 0 ? Math.max(0, (answered / questionCount) * 100) : 0;
 
         // Display
         displayEl.textContent = formatTime(remaining);
 
         // Progress bar
         fillEl.style.width = pct + '%';
-        labelEl.textContent = Math.round(pct) + '%';
+        labelEl.textContent = answered + '/' + questionCount;
 
         // Color thresholds
         displayEl.classList.remove('pt-warning','pt-danger');
         fillEl.classList.remove('pt-warn-fill','pt-danger-fill');
 
-        if (remaining <= 60) {                          // last 1 min — RED
+        if (remaining <= 60) {
             displayEl.classList.add('pt-danger');
             fillEl.classList.add('pt-danger-fill');
             hourglassEl.className = 'fas fa-hourglass-end';
-        } else if (remaining <= TOTAL_SECONDS * 0.25) { // last 25% — AMBER
+        } else if (remaining <= Math.max(120, Math.floor(TOTAL_SECONDS * 0.25))) {
             displayEl.classList.add('pt-warning');
             fillEl.classList.add('pt-warn-fill');
             hourglassEl.className = 'fas fa-hourglass-half';
@@ -523,12 +545,11 @@
     }
 
     function tick() {
-        remaining--;
+        const remaining = computeRemaining();
         if (remaining <= 0) {
-            remaining = 0;
-            updateUI();
             clearInterval(timer);
-            // Show modal then auto-submit
+            updateUI();
+            timeoutInputEl.value = '1';
             modalEl.style.display = 'flex';
             setTimeout(function () { formEl.submit(); }, 2000);
             return;
@@ -542,11 +563,16 @@
 
     // Warn before submit
     formEl.addEventListener('submit', function () {
+        sessionStorage.removeItem(storageKey);
         const btn = document.getElementById('pt-submit-btn');
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = '<div class="pt-spinner" style="width:16px;height:16px;border-width:2px;margin-right:0.5rem;"></div> Mengirim...';
         }
+    });
+
+    formEl.addEventListener('change', function () {
+        updateUI();
     });
 })();
 </script>

@@ -2,11 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\School;
-use App\Models\User;
 use App\Models\Course;
+use App\Models\CourseType;
 use App\Models\Lesson;
 use App\Models\Question;
+use App\Models\School;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -42,7 +43,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create Course
-        $pelatihanType = \App\Models\CourseType::where('slug', 'pelatihan')->first();
+        $pelatihanType = CourseType::where('slug', 'pelatihan')->first();
         $course = Course::create([
             'title' => 'Deteksi Dini Kanker Serviks dan Payudara',
             'description' => 'Pelatihan untuk tenaga kesehatan dalam mendeteksi dini kanker serviks dan payudara menggunakan metode terbaru.',

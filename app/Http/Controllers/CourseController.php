@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
-use App\Models\UserProgress;
 use App\Models\Notification;
 use App\Models\Result;
+use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,7 +16,7 @@ class CourseController extends Controller
         $query = Course::query();
 
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->string('search')->toString() . '%');
+            $query->where('title', 'like', '%'.$request->string('search')->toString().'%');
         }
 
         $sort = $request->string('sort', 'newest')->toString();
@@ -36,7 +36,7 @@ class CourseController extends Controller
 
         $courses = $query->with(['school', 'type', 'lessons', 'postQuestions'])->withCount('lessons')->get();
         $user_id = Auth::id();
-        
+
         $completedByCourse = [];
         $resultsByCourse = [];
 
@@ -46,25 +46,25 @@ class CourseController extends Controller
                 ->whereIn('lesson_id', $course->lessons->pluck('id'))
                 ->where('is_completed', true)
                 ->count();
-            
+
             $completedByCourse[$course->id] = $completedCount;
-            
+
             $resultsByCourse[$course->id] = Result::where('user_id', $user_id)
                 ->where('course_id', $course->id)
                 ->exists();
 
             // Proactively create notification for post-test if lessons are finished but post-test not taken
-            if ($totalLessons > 0 && $completedCount === $totalLessons && !$resultsByCourse[$course->id]) {
+            if ($totalLessons > 0 && $completedCount === $totalLessons && ! $resultsByCourse[$course->id]) {
                 $notifActionUrl = route('tests.index', $course->id);
                 $notifExists = Notification::where('user_id', $user_id)
                     ->where('action_url', $notifActionUrl)
                     ->exists();
 
-                if (!$notifExists) {
+                if (! $notifExists) {
                     Notification::create([
                         'user_id' => $user_id,
-                        'title' => "Materi Tuntas: " . $course->title,
-                        'message' => "Selamat! Kamu telah menyelesaikan semua materi di " . $course->title . ". Ayo ambil Post Test sekarang untuk mendapatkan nilai!",
+                        'title' => 'Materi Tuntas: '.$course->title,
+                        'message' => 'Selamat! Kamu telah menyelesaikan semua materi di '.$course->title.'. Ayo ambil Post Test sekarang untuk mendapatkan nilai!',
                         'type' => 'result',
                         'action_url' => $notifActionUrl,
                         'is_read' => false,
@@ -84,8 +84,8 @@ class CourseController extends Controller
             ->whereIn('lesson_id', $course->lessons->pluck('id'))
             ->pluck('is_completed', 'lesson_id')
             ->toArray();
-        
-        $all_completed = $course->lessons->count() > 0 && $course->lessons->every(function($lesson) use ($progress) {
+
+        $all_completed = $course->lessons->count() > 0 && $course->lessons->every(function ($lesson) use ($progress) {
             return isset($progress[$lesson->id]) && $progress[$lesson->id];
         });
 
