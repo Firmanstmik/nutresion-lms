@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\CourseType;
 use App\Models\Lesson;
+use App\Models\Notification;
 use App\Models\Question;
 use App\Models\Result;
 use App\Models\School;
@@ -226,10 +227,11 @@ class AdminController extends Controller
     {
         $student = User::where('role', 'student')->findOrFail($id);
 
+        Notification::where('user_id', $student->id)->delete();
         UserProgress::where('user_id', $student->id)->delete();
         Result::where('user_id', $student->id)->delete();
 
-        return back()->with('success', 'Aktivitas siswa berhasil direset (semua).');
+        return back()->with('success', 'Aktivitas & notifikasi siswa berhasil direset (semua).');
     }
 
     public function resetStudentActivityCourse($id, $course_id)
@@ -238,6 +240,22 @@ class AdminController extends Controller
         $course = Course::with('lessons')->findOrFail($course_id);
 
         $lessonIds = $course->lessons->pluck('id')->all();
+        $resultIds = Result::where('user_id', $student->id)->where('course_id', $course->id)->pluck('id')->all();
+
+        $notificationUrls = [
+            route('courses.detail', $course->id),
+            route('tests.index', $course->id),
+            route('tests.pre.index', $course->id),
+        ];
+        foreach ($lessonIds as $lessonId) {
+            $notificationUrls[] = route('lessons.show', $lessonId);
+        }
+        foreach ($resultIds as $resultId) {
+            $notificationUrls[] = route('results.show', $resultId);
+        }
+        $notificationUrls = array_values(array_unique($notificationUrls));
+
+        Notification::where('user_id', $student->id)->whereIn('action_url', $notificationUrls)->delete();
 
         if (count($lessonIds) > 0) {
             UserProgress::where('user_id', $student->id)->whereIn('lesson_id', $lessonIds)->delete();
@@ -245,17 +263,23 @@ class AdminController extends Controller
 
         Result::where('user_id', $student->id)->where('course_id', $course->id)->delete();
 
-        return back()->with('success', 'Aktivitas kursus berhasil direset.');
+        return back()->with('success', 'Aktivitas & notifikasi kursus berhasil direset.');
     }
 
     public function resetStudentActivityLesson($id, $lesson_id)
     {
         $student = User::where('role', 'student')->findOrFail($id);
-        Lesson::findOrFail($lesson_id);
+        $lesson = Lesson::findOrFail($lesson_id);
 
         UserProgress::where('user_id', $student->id)->where('lesson_id', $lesson_id)->delete();
 
-        return back()->with('success', 'Aktivitas bab berhasil direset.');
+        $notificationUrls = [
+            route('lessons.show', $lesson->id),
+            route('tests.index', $lesson->course_id),
+        ];
+        Notification::where('user_id', $student->id)->whereIn('action_url', $notificationUrls)->delete();
+
+        return back()->with('success', 'Aktivitas & notifikasi bab berhasil direset.');
     }
 
     // Course Management

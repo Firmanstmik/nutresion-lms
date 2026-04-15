@@ -19,6 +19,7 @@
                 </div>
                 <span class="pst-progress-label" id="pst-progress-label">0/{{ $course->postQuestions->count() }}</span>
             </div>
+            <div class="pst-mins-chip" id="pst-mins-chip">Sisa 0 menit</div>
             <div class="pst-course-info">
                 <i class="fas fa-medal"></i>
                 <span>{{ Str::limit($course->title, 28) }}</span>
@@ -215,6 +216,19 @@
     color: rgba(255,255,255,0.28);
 }
 .pst-course-info .fas { font-size: 0.52rem; }
+.pst-mins-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
 
 .pst-header {
     background: radial-gradient(70% 70% at 15% 10%, rgba(20,168,143,0.22), rgba(20,168,143,0) 55%),
@@ -452,6 +466,51 @@
     const modalEl = document.getElementById('pst-timeout-modal');
     const hourglassEl = document.getElementById('pst-hourglass-icon');
     const timeoutInputEl = document.getElementById('pst-is-timeout');
+    const minsChipEl = document.getElementById('pst-mins-chip');
+
+    let allowLeave = false;
+    let lastWarnAt = 0;
+    const warnText = 'Kamu sedang mengerjakan Post Test. Selesaikan terlebih dahulu untuk keluar dari halaman ini.';
+
+    function warnOnce() {
+        const now = Date.now();
+        if (now - lastWarnAt < 1500) return;
+        lastWarnAt = now;
+        alert(warnText);
+    }
+
+    function beforeUnload(e) {
+        if (allowLeave) return;
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+
+    function setupGuards() {
+        history.pushState({ pst_lock: true }, '', location.href);
+        window.addEventListener('popstate', function () {
+            if (allowLeave) return;
+            history.pushState({ pst_lock: true }, '', location.href);
+            warnOnce();
+        });
+
+        window.addEventListener('beforeunload', beforeUnload);
+
+        document.addEventListener('click', function (e) {
+            if (allowLeave) return;
+            const a = e.target.closest('a');
+            if (!a) return;
+            e.preventDefault();
+            e.stopPropagation();
+            warnOnce();
+        }, true);
+
+        document.addEventListener('turbo:before-visit', function (e) {
+            if (allowLeave) return;
+            e.preventDefault();
+            warnOnce();
+        });
+    }
 
     function formatTime(s) {
         const m = Math.floor(s / 60);
@@ -472,8 +531,10 @@
         const remaining = computeRemaining();
         const answered = answeredCount();
         const pct = questionCount > 0 ? Math.max(0, (answered / questionCount) * 100) : 0;
+        const remainingMinutes = Math.max(0, Math.ceil(remaining / 60));
 
         displayEl.textContent = formatTime(remaining);
+        if (minsChipEl) minsChipEl.textContent = 'Sisa ' + remainingMinutes + ' menit';
         fillEl.style.width = pct + '%';
         labelEl.textContent = answered + '/' + questionCount;
 
@@ -498,6 +559,7 @@
             clearInterval(timer);
             updateUI();
             timeoutInputEl.value = '1';
+            allowLeave = true;
             modalEl.style.display = 'flex';
             setTimeout(function () { formEl.submit(); }, 2000);
             return;
@@ -505,10 +567,13 @@
         updateUI();
     }
 
+    setupGuards();
     updateUI();
     const timer = setInterval(tick, 1000);
 
     formEl.addEventListener('submit', function () {
+        allowLeave = true;
+        window.removeEventListener('beforeunload', beforeUnload);
         sessionStorage.removeItem(storageKey);
         const btn = document.getElementById('pst-submit-btn');
         if (btn) {

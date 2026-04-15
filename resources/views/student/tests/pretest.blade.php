@@ -23,6 +23,7 @@
                 </div>
                 <span class="pt-progress-label" id="pt-progress-label">0/{{ $course->preQuestions->count() }}</span>
             </div>
+            <div class="pt-mins-chip" id="pt-mins-chip">Sisa 0 menit</div>
             <div class="pt-course-info">
                 <i class="fas fa-book-open"></i>
                 <span>{{ Str::limit($course->title, 28) }}</span>
@@ -232,6 +233,19 @@
     color: rgba(255,255,255,0.28);
 }
 .pt-course-info .fas { font-size: 0.52rem; }
+.pt-mins-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
 
 /* ── Header ─────────────────────────────────────────────────── */
 .pt-header {
@@ -499,6 +513,51 @@
     const modalEl    = document.getElementById('pt-timeout-modal');
     const hourglassEl= document.getElementById('pt-hourglass-icon');
     const timeoutInputEl = document.getElementById('pt-is-timeout');
+    const minsChipEl = document.getElementById('pt-mins-chip');
+
+    let allowLeave = false;
+    let lastWarnAt = 0;
+    const warnText = 'Kamu sedang mengerjakan Pre Test. Selesaikan terlebih dahulu untuk keluar dari halaman ini.';
+
+    function warnOnce() {
+        const now = Date.now();
+        if (now - lastWarnAt < 1500) return;
+        lastWarnAt = now;
+        alert(warnText);
+    }
+
+    function beforeUnload(e) {
+        if (allowLeave) return;
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+
+    function setupGuards() {
+        history.pushState({ pt_lock: true }, '', location.href);
+        window.addEventListener('popstate', function () {
+            if (allowLeave) return;
+            history.pushState({ pt_lock: true }, '', location.href);
+            warnOnce();
+        });
+
+        window.addEventListener('beforeunload', beforeUnload);
+
+        document.addEventListener('click', function (e) {
+            if (allowLeave) return;
+            const a = e.target.closest('a');
+            if (!a) return;
+            e.preventDefault();
+            e.stopPropagation();
+            warnOnce();
+        }, true);
+
+        document.addEventListener('turbo:before-visit', function (e) {
+            if (allowLeave) return;
+            e.preventDefault();
+            warnOnce();
+        });
+    }
 
     function formatTime(s) {
         const m = Math.floor(s / 60);
@@ -519,9 +578,11 @@
         const remaining = computeRemaining();
         const answered = answeredCount();
         const pct = questionCount > 0 ? Math.max(0, (answered / questionCount) * 100) : 0;
+        const remainingMinutes = Math.max(0, Math.ceil(remaining / 60));
 
         // Display
         displayEl.textContent = formatTime(remaining);
+        if (minsChipEl) minsChipEl.textContent = 'Sisa ' + remainingMinutes + ' menit';
 
         // Progress bar
         fillEl.style.width = pct + '%';
@@ -550,6 +611,7 @@
             clearInterval(timer);
             updateUI();
             timeoutInputEl.value = '1';
+            allowLeave = true;
             modalEl.style.display = 'flex';
             setTimeout(function () { formEl.submit(); }, 2000);
             return;
@@ -558,11 +620,14 @@
     }
 
     // Initialise
+    setupGuards();
     updateUI();
     const timer = setInterval(tick, 1000);
 
     // Warn before submit
     formEl.addEventListener('submit', function () {
+        allowLeave = true;
+        window.removeEventListener('beforeunload', beforeUnload);
         sessionStorage.removeItem(storageKey);
         const btn = document.getElementById('pt-submit-btn');
         if (btn) {
