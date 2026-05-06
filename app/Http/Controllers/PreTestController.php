@@ -8,13 +8,14 @@ use App\Models\Result;
 use App\Models\ResultAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class PreTestController extends Controller
 {
     /**
      * Tampilkan soal pretest.
      */
-    public function index($course_id)
+    public function index(int $course_id)
     {
         $course = Course::with(['lessons', 'preQuestions'])->findOrFail($course_id);
         $user_id = Auth::id();
@@ -46,7 +47,7 @@ class PreTestController extends Controller
     /**
      * Simpan hasil pretest.
      */
-    public function submit(Request $request, $course_id)
+    public function submit(Request $request, int $course_id)
     {
         $course = Course::with('preQuestions')->findOrFail($course_id);
         $user_id = Auth::id();
@@ -95,7 +96,9 @@ class PreTestController extends Controller
                 $row['result_id'] = $result->id;
             }
             unset($row);
-            ResultAnswer::insert($answer_rows);
+            if (Schema::hasTable('result_answers')) {
+                ResultAnswer::insert($answer_rows);
+            }
         }
 
         // Notifikasi

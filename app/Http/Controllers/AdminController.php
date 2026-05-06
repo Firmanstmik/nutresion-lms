@@ -8,6 +8,7 @@ use App\Models\Lesson;
 use App\Models\Notification;
 use App\Models\Question;
 use App\Models\Result;
+use App\Models\ResultAnswer;
 use App\Models\School;
 use App\Models\User;
 use App\Models\UserProgress;
@@ -15,6 +16,7 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
@@ -63,7 +65,7 @@ class AdminController extends Controller
         return back()->with('success', 'School created successfully');
     }
 
-    public function updateSchool(Request $request, $id)
+    public function updateSchool(Request $request, int $id)
     {
         $request->validate(['name' => 'required|string|max:255']);
         $school = School::findOrFail($id);
@@ -72,7 +74,7 @@ class AdminController extends Controller
         return back()->with('success', 'School updated successfully');
     }
 
-    public function destroySchool($id)
+    public function destroySchool(int $id)
     {
         $school = School::findOrFail($id);
         $school->delete();
@@ -153,7 +155,7 @@ class AdminController extends Controller
         return back()->with('success', 'Student created successfully');
     }
 
-    public function updateStudent(Request $request, $id)
+    public function updateStudent(Request $request, int $id)
     {
         $user = User::findOrFail($id);
         $request->validate([
@@ -178,7 +180,7 @@ class AdminController extends Controller
         return back()->with('success', 'Student updated successfully');
     }
 
-    public function destroyStudent($id)
+    public function destroyStudent(int $id)
     {
         $user = User::findOrFail($id);
         $user->delete();
@@ -186,7 +188,7 @@ class AdminController extends Controller
         return back()->with('success', 'Student deleted successfully');
     }
 
-    public function studentActivity($id)
+    public function studentActivity(int $id)
     {
         $student = User::where('role', 'student')->with('school')->findOrFail($id);
 
@@ -225,7 +227,7 @@ class AdminController extends Controller
         ));
     }
 
-    public function resetStudentActivityAll($id)
+    public function resetStudentActivityAll(int $id)
     {
         $student = User::where('role', 'student')->findOrFail($id);
 
@@ -236,7 +238,7 @@ class AdminController extends Controller
         return back()->with('success', 'Aktivitas & notifikasi siswa berhasil direset (semua).');
     }
 
-    public function resetStudentActivityCourse($id, $course_id)
+    public function resetStudentActivityCourse(int $id, int $course_id)
     {
         $student = User::where('role', 'student')->findOrFail($id);
         $course = Course::with('lessons')->findOrFail($course_id);
@@ -268,7 +270,74 @@ class AdminController extends Controller
         return back()->with('success', 'Aktivitas & notifikasi kursus berhasil direset.');
     }
 
-    public function resetStudentActivityLesson($id, $lesson_id)
+    public function resetStudentPreTest(int $id, int $course_id)
+    {
+        $student = User::where('role', 'student')->findOrFail($id);
+        $course = Course::findOrFail($course_id);
+
+        $resultIds = Result::query()
+            ->where('user_id', $student->id)
+            ->where('course_id', $course->id)
+            ->where('type', 'pre')
+            ->pluck('id')
+            ->all();
+
+        if (count($resultIds) > 0 && Schema::hasTable('result_answers')) {
+            ResultAnswer::whereIn('result_id', $resultIds)->delete();
+        }
+
+        Result::query()
+            ->where('user_id', $student->id)
+            ->where('course_id', $course->id)
+            ->where('type', 'pre')
+            ->delete();
+
+        Notification::query()
+            ->where('user_id', $student->id)
+            ->where('title', 'Pre Test Selesai: '.$course->title)
+            ->delete();
+
+        return back()->with('success', 'Pre Test berhasil direset untuk kursus ini.');
+    }
+
+    public function resetStudentPostTest(int $id, int $course_id)
+    {
+        $student = User::where('role', 'student')->findOrFail($id);
+        $course = Course::findOrFail($course_id);
+
+        $resultIds = Result::query()
+            ->where('user_id', $student->id)
+            ->where('course_id', $course->id)
+            ->where('type', 'post')
+            ->pluck('id')
+            ->all();
+
+        $notificationUrls = [];
+        foreach ($resultIds as $rid) {
+            $notificationUrls[] = route('results.show', $rid);
+        }
+
+        if (count($resultIds) > 0 && Schema::hasTable('result_answers')) {
+            ResultAnswer::whereIn('result_id', $resultIds)->delete();
+        }
+
+        Result::query()
+            ->where('user_id', $student->id)
+            ->where('course_id', $course->id)
+            ->where('type', 'post')
+            ->delete();
+
+        if (count($notificationUrls) > 0) {
+            Notification::query()
+                ->where('user_id', $student->id)
+                ->whereIn('action_url', $notificationUrls)
+                ->delete();
+        }
+
+        return back()->with('success', 'Post Test berhasil direset untuk kursus ini.');
+    }
+
+    public function resetStudentActivityLesson(int $id, int $lesson_id)
     {
         $student = User::where('role', 'student')->findOrFail($id);
         $lesson = Lesson::findOrFail($lesson_id);
@@ -315,7 +384,7 @@ class AdminController extends Controller
         return back()->with('success', 'Course created successfully');
     }
 
-    public function updateCourse(Request $request, $id)
+    public function updateCourse(Request $request, int $id)
     {
         $course = Course::findOrFail($id);
         $request->validate([
@@ -342,7 +411,7 @@ class AdminController extends Controller
         return back()->with('success', 'Course updated successfully');
     }
 
-    public function destroyCourse($id)
+    public function destroyCourse(int $id)
     {
         $course = Course::findOrFail($id);
         if ($course->thumbnail) {
@@ -354,7 +423,7 @@ class AdminController extends Controller
     }
 
     // Lesson Management
-    public function lessons($course_id)
+    public function lessons(int $course_id)
     {
         $course = Course::findOrFail($course_id);
         $lessons = $course->lessons;
@@ -362,7 +431,7 @@ class AdminController extends Controller
         return view('admin.lessons.index', compact('course', 'lessons'));
     }
 
-    public function storeLesson(Request $request, $course_id)
+    public function storeLesson(Request $request, int $course_id)
     {
         if ($request->input('video_url') === '') {
             $request->merge(['video_url' => null]);
@@ -386,7 +455,7 @@ class AdminController extends Controller
         return back()->with('success', 'Lesson created successfully');
     }
 
-    public function updateLesson(Request $request, $id)
+    public function updateLesson(Request $request, int $id)
     {
         $lesson = Lesson::findOrFail($id);
         if ($request->input('video_url') === '') {
@@ -405,7 +474,7 @@ class AdminController extends Controller
         return back()->with('success', 'Lesson updated successfully');
     }
 
-    public function destroyLesson($id)
+    public function destroyLesson(int $id)
     {
         $lesson = Lesson::findOrFail($id);
         $lesson->delete();
@@ -429,7 +498,7 @@ class AdminController extends Controller
     }
 
     // Question Management
-    public function questions($course_id)
+    public function questions(int $course_id)
     {
         $course = Course::findOrFail($course_id);
         $questions = Question::where('course_id', $course_id)->where('type', 'post')->get();
@@ -437,7 +506,7 @@ class AdminController extends Controller
         return view('admin.questions.index', compact('course', 'questions'));
     }
 
-    public function preQuestions($course_id)
+    public function preQuestions(int $course_id)
     {
         $course = Course::findOrFail($course_id);
         $questions = Question::where('course_id', $course_id)->where('type', 'pre')->get();
@@ -445,7 +514,7 @@ class AdminController extends Controller
         return view('admin.pre_questions.index', compact('course', 'questions'));
     }
 
-    public function storeQuestion(Request $request, $course_id)
+    public function storeQuestion(Request $request, int $course_id)
     {
         $request->validate([
             'question' => 'required|string',
@@ -461,7 +530,7 @@ class AdminController extends Controller
         return back()->with('success', 'Question added successfully');
     }
 
-    public function storePreQuestion(Request $request, $course_id)
+    public function storePreQuestion(Request $request, int $course_id)
     {
         $request->validate([
             'question' => 'required|string',
@@ -477,7 +546,7 @@ class AdminController extends Controller
         return back()->with('success', 'Question added successfully');
     }
 
-    public function updateQuestion(Request $request, $id)
+    public function updateQuestion(Request $request, int $id)
     {
         $question = Question::findOrFail($id);
         $request->validate([
@@ -494,7 +563,7 @@ class AdminController extends Controller
         return back()->with('success', 'Question updated successfully');
     }
 
-    public function destroyQuestion($id)
+    public function destroyQuestion(int $id)
     {
         $question = Question::findOrFail($id);
         $question->delete();
@@ -502,7 +571,7 @@ class AdminController extends Controller
         return back()->with('success', 'Question deleted successfully');
     }
 
-    public function destroyPreQuestion($id)
+    public function destroyPreQuestion(int $id)
     {
         $question = Question::findOrFail($id);
         $question->delete();
@@ -519,11 +588,18 @@ class AdminController extends Controller
         return view('admin.results.index', compact('results', 'schools'));
     }
 
-    public function resultShow($id)
+    public function resultShow(int $id)
     {
-        $result = Result::with(['course', 'user.school', 'answers.question'])->findOrFail($id);
+        $query = Result::with(['course', 'user.school']);
+        if (Schema::hasTable('result_answers')) {
+            $query->with(['answers.question']);
+        }
 
-        return view('student.results.show', compact('result'));
+        $result = $query->findOrFail($id);
+        $answers = Schema::hasTable('result_answers') ? ($result->answers ?? collect()) : collect();
+        $hasDetail = Schema::hasTable('result_answers') && $answers->count() > 0;
+
+        return view('student.results.show', compact('result', 'answers', 'hasDetail'));
     }
 
     public function resultsTrendData()
@@ -577,7 +653,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function resultsExport(Request $request, $type)
+    public function resultsExport(Request $request, string $type)
     {
         if (! in_array($type, ['pre', 'post'], true)) {
             abort(404);

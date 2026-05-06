@@ -1,4 +1,4 @@
-# Nutrition Rescue Mission - LMS System (Pro Version)
+# Nutrition Education Mission - LMS System (Pro Version)
 
 Sistem Manajemen Pembelajaran (LMS) modern yang dibangun dengan Laravel, TailwindCSS, dan Blade. Didesain khusus untuk sekolah dengan alur yang mobile-first dan production-ready.
 

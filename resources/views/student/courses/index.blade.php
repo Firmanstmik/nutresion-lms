@@ -107,7 +107,7 @@
 
                 <div class="lms-hero-pill">
                     <span class="lms-pill-live"></span>
-                    <span>Nutrition Rescue Mission</span>
+                    <span>Nutrition Education Mission</span>
                     <span class="lms-pill-sep">·</span>
                     <span>Modul Pembelajaran</span>
                 </div>

@@ -79,15 +79,37 @@
                         </div>
                     </div>
 
-                    <form action="{{ route('admin.students.activity.reset-course', ['id' => $student->id, 'course_id' => $course->id]) }}" method="POST"
-                          onsubmit="return confirm('Reset aktivitas kursus ini? Ini akan menghapus progres bab dan hasil test (pre/post) untuk kursus ini.')">
-                        @csrf
-                        <button type="submit"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-sm bg-gray-900 text-white text-xs font-extrabold tracking-widest uppercase hover:bg-black">
-                            <i class="fas fa-rotate-left"></i>
-                            Reset Kursus
-                        </button>
-                    </form>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <form action="{{ route('admin.students.activity.reset-pretest', ['id' => $student->id, 'course_id' => $course->id]) }}" method="POST"
+                              onsubmit="return confirm('Reset Pre Test untuk kursus ini?')">
+                            @csrf
+                            <button type="submit"
+                                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-sm border border-amber-200 bg-amber-50 text-amber-800 text-xs font-extrabold tracking-widest uppercase hover:bg-amber-100 {{ $pre ? '' : 'opacity-40 pointer-events-none' }}">
+                                <i class="fas fa-rotate-left"></i>
+                                Reset Pre Test
+                            </button>
+                        </form>
+
+                        <form action="{{ route('admin.students.activity.reset-posttest', ['id' => $student->id, 'course_id' => $course->id]) }}" method="POST"
+                              onsubmit="return confirm('Reset Post Test untuk kursus ini?')">
+                            @csrf
+                            <button type="submit"
+                                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-sm border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-extrabold tracking-widest uppercase hover:bg-emerald-100 {{ $post ? '' : 'opacity-40 pointer-events-none' }}">
+                                <i class="fas fa-rotate-left"></i>
+                                Reset Post Test
+                            </button>
+                        </form>
+
+                        <form action="{{ route('admin.students.activity.reset-course', ['id' => $student->id, 'course_id' => $course->id]) }}" method="POST"
+                              onsubmit="return confirm('Reset aktivitas kursus ini? Ini akan menghapus progres bab dan hasil test (pre/post) untuk kursus ini.')">
+                            @csrf
+                            <button type="submit"
+                                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-sm bg-gray-900 text-white text-xs font-extrabold tracking-widest uppercase hover:bg-black">
+                                <i class="fas fa-rotate-left"></i>
+                                Reset Kursus
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -164,4 +186,3 @@
     </div>
 </div>
 @endsection
-

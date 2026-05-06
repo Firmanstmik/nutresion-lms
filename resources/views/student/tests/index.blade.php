@@ -144,22 +144,22 @@
     --pst-border:   #E5E7EB;
     --pst-surface:  #F9FAFB;
     --pst-white:    #FFFFFF;
-    --pst-nav-h:    60px;
-    --pst-timer-h:  56px;
+    --pst-nav-h:    100px;
+    --pst-timer-h:  72px;
 }
 
 .pst-timer-bar {
     position: fixed;
     top: var(--pst-nav-h); left: 0; right: 0;
-    z-index: 9999;
+    z-index: 990;
     background: rgba(11,30,63,0.98);
     border-bottom: 1px solid rgba(226,196,113,0.18);
     box-shadow: 0 6px 30px rgba(0,0,0,0.28);
 }
 .pst-timer-inner {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
-    padding: 0.7rem 1.25rem;
+    padding: 0.85rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -235,7 +235,7 @@
 .pst-header {
     background: radial-gradient(70% 70% at 15% 10%, rgba(20,168,143,0.22), rgba(20,168,143,0) 55%),
                 linear-gradient(135deg, var(--pst-navy) 0%, #08162F 100%);
-    padding: calc(4.25rem + var(--pst-timer-h)) 1.25rem 2.5rem;
+    padding: calc(4.25rem + var(--pst-timer-h) + 32px) 1.25rem 2.5rem;
 }
 .pst-header-inner {
     max-width: 900px; margin: 0 auto;

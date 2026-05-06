@@ -11,7 +11,7 @@ use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/brand/logo.webp', function () {
-    return response()->file(resource_path('img/Nutrition Rescue Mission Logo1.webp'));
+    return response()->file(resource_path('img/New Logo Nutression.webp'));
 })->name('brand.logo');
 
 Route::get('/brand/bg-lms.webp', function () {
@@ -27,7 +27,7 @@ Route::get('/brand/bg-mobile.webp', function () {
 })->name('brand.bg-mobile');
 
 Route::get('/brand/hero.webp', function () {
-    return response()->file(resource_path('img/hero nutritiion.webp'));
+    return response()->file(resource_path('img/hero dashboard.webp'));
 })->name('brand.hero');
 
 Route::get('/brand/hero-admin.webp', function () {
@@ -35,7 +35,7 @@ Route::get('/brand/hero-admin.webp', function () {
 })->name('brand.hero-admin');
 
 Route::get('/brand/belajar-nutrition.webp', function () {
-    return response()->file(resource_path('img/belajar nutresion.webp'));
+    return response()->file(resource_path('img/Nutresion Image.webp'));
 })->name('brand.belajar-nutrition');
 
 // Auth Routes
@@ -86,6 +86,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/students/{id}/activity', [AdminController::class, 'studentActivity'])->name('students.activity');
     Route::post('/students/{id}/activity/reset-all', [AdminController::class, 'resetStudentActivityAll'])->name('students.activity.reset-all');
     Route::post('/students/{id}/activity/reset-course/{course_id}', [AdminController::class, 'resetStudentActivityCourse'])->name('students.activity.reset-course');
+    Route::post('/students/{id}/activity/reset-pretest/{course_id}', [AdminController::class, 'resetStudentPreTest'])->name('students.activity.reset-pretest');
+    Route::post('/students/{id}/activity/reset-posttest/{course_id}', [AdminController::class, 'resetStudentPostTest'])->name('students.activity.reset-posttest');
     Route::post('/students/{id}/activity/reset-lesson/{lesson_id}', [AdminController::class, 'resetStudentActivityLesson'])->name('students.activity.reset-lesson');
 
     // Course Management

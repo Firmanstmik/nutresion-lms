@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
 @section('hero')
-<div class="nrs-root" style="padding-top: 12px;">
+<div class="nrs-root">
     {{-- ═══════════════════════════════════════════════════════════════
          HERO SECTION — Completely Unchanged
     ═══════════════════════════════════════════════════════════════ --}}
-    <div class="relative overflow-visible mb-6">
-        <div class="hero-img-box relative h-[170px] sm:h-[260px] lg:h-[320px] w-full rounded-t-none rounded-b-3xl overflow-hidden shadow-2xl shadow-gray-200/60 border border-gray-100 ring-1 ring-black/5">
-            <img src="{{ route('brand.hero') }}" alt="Hero" class="absolute inset-0 w-full h-full object-cover object-center">
+    <div class="relative overflow-visible">
+        <div class="hero-img-box relative h-[240px] sm:h-[320px] lg:h-[420px] w-full rounded-t-none rounded-b-3xl overflow-hidden shadow-2xl shadow-gray-200/60 border border-gray-100 ring-1 ring-black/5 bg-white">
+            <img src="{{ route('brand.hero') }}?v={{ time() }}" alt="Hero" class="absolute inset-0 w-full h-full object-contain object-top sm:object-center">
             <div class="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent"></div>
             <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_85%_10%,rgba(255,255,255,0.18),rgba(255,255,255,0)_55%)]"></div>
         </div>
@@ -80,7 +80,7 @@
                     </div>
 
                     <p class="fabric-desc">
-                        Selamat datang di Nutrition Rescue Mission. Mari lanjutkan perjalanan belajarmu hari ini.
+                        Selamat datang di Nutrition Education Mission. Mari lanjutkan perjalanan belajarmu hari ini.
                     </p>
                 </div>
             </div>

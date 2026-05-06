@@ -9,10 +9,11 @@ use App\Models\ResultAnswer;
 use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class TestController extends Controller
 {
-    public function index($course_id)
+    public function index(int $course_id)
     {
         $course = Course::with(['lessons', 'postQuestions'])->findOrFail($course_id);
         $user_id = Auth::id();
@@ -35,7 +36,7 @@ class TestController extends Controller
         // Check if test already taken
         $existing_result = Result::where('user_id', $user_id)->where('course_id', $course_id)->where('type', 'post')->first();
         if ($existing_result) {
-            return redirect()->route('results.show', $existing_result->id);
+            return view('student.tests.completed', compact('course', 'existing_result'));
         }
 
         $question_count = $course->postQuestions->count();
@@ -45,7 +46,7 @@ class TestController extends Controller
         return view('student.tests.index', compact('course', 'duration_seconds', 'duration_minutes', 'question_count'));
     }
 
-    public function submit(Request $request, $course_id)
+    public function submit(Request $request, int $course_id)
     {
         $course = Course::with('postQuestions')->findOrFail($course_id);
         $user_id = Auth::id();
@@ -93,7 +94,9 @@ class TestController extends Controller
                 $row['result_id'] = $result->id;
             }
             unset($row);
-            ResultAnswer::insert($answer_rows);
+            if (Schema::hasTable('result_answers')) {
+                ResultAnswer::insert($answer_rows);
+            }
         }
 
         // Create Notification for Result
@@ -109,14 +112,22 @@ class TestController extends Controller
         return redirect()->route('results.show', $result->id);
     }
 
-    public function result($id)
+    public function result(int $id)
     {
-        $result = Result::with(['course', 'answers.question'])->findOrFail($id);
+        $query = Result::with('course');
+        if (Schema::hasTable('result_answers')) {
+            $query->with(['answers.question']);
+        }
+
+        $result = $query->findOrFail($id);
         if ($result->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
             abort(403);
         }
 
-        return view('student.results.show', compact('result'));
+        $answers = Schema::hasTable('result_answers') ? ($result->answers ?? collect()) : collect();
+        $hasDetail = Schema::hasTable('result_answers') && $answers->count() > 0;
+
+        return view('student.results.show', compact('result', 'answers', 'hasDetail'));
     }
 
     public function myResults()

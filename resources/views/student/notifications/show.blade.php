@@ -40,11 +40,23 @@
                         {{ $notification->message }}
                     </p>
 
-                    <div class="mt-8 flex flex-col sm:flex-row gap-3">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 mt-12">
                         @if($notification->action_url)
-                            <a href="{{ $notification->action_url }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-4 rounded-3xl bg-primary text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 active:scale-95 transition">
-                                Buka Tautan
-                                <i class="fas fa-arrow-right"></i>
+                            @php
+                                $btnText = 'Buka Tautan';
+                                $btnIcon = 'fa-arrow-right';
+                                
+                                if (Str::contains($notification->title, 'Post Test Selesai')) {
+                                    $btnText = 'Lihat Nilai';
+                                    $btnIcon = 'fa-trophy';
+                                } elseif (Str::contains($notification->title, 'Materi Tuntas')) {
+                                    $btnText = 'Buka Post Test';
+                                    $btnIcon = 'fa-rocket';
+                                }
+                            @endphp
+                            <a href="{{ $notification->action_url }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-3xl bg-primary text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 active:scale-95 transition">
+                                {{ $btnText }}
+                                <i class="fas {{ $btnIcon }}"></i>
                             </a>
                         @endif
                         <a href="{{ route('notifications.index') }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-4 rounded-3xl bg-white border border-border-subtle text-text-secondary font-black uppercase tracking-widest text-xs shadow-sm active:scale-95 transition">

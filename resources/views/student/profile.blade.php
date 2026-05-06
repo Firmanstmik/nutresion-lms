@@ -22,7 +22,7 @@
                 </div>
                 <div class="pr-identity-text">
                     <span class="pr-id-label">PORTAL PROFIL</span>
-                    <span class="pr-id-name">Nutrition Rescue Mission</span>
+                    <span class="pr-id-name">Nutrition Education Mission</span>
                 </div>
             </div>
             <div class="pr-identity-right">

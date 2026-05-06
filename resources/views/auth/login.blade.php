@@ -90,7 +90,14 @@
         display: flex; align-items: center; justify-content: center;
         flex-shrink: 0; backdrop-filter: none;
     }
-    .lp-logo-box img { width: 72px; height: 72px; object-fit: contain; }
+    .lp-logo-box img { 
+        width: 72px; height: 72px; 
+        object-fit: contain; 
+        background: white;
+        border-radius: 16px; 
+        padding: 6px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.1); 
+    }
     .lp-app-name { font-size: 14px; font-weight: 800; color: white; line-height: 1.2; }
     .lp-app-tag  { font-size: 9.5px; font-weight: 600; color: rgba(255,255,255,.45); letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
 
@@ -118,6 +125,10 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
+        background: white;
+        border-radius: 32px;
+        padding: 12px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
     }
     .lp-mid-content {
@@ -369,7 +380,7 @@
             width: auto; height: auto; background: none; border: none;
             display: flex; align-items: center; justify-content: center; flex-shrink:0;
         }
-        .m-logo-box img { width: 64px; height: 64px; object-fit: contain; }
+        .m-logo-box img { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .m-app-name { font-size: 14px; font-weight: 800; color: white; line-height: 1.25; }
         .m-app-sub  { font-size: 9px; font-weight: 600; color: rgba(255,255,255,.42); letter-spacing: .12em; text-transform: uppercase; margin-top: 1px; }
 
@@ -388,7 +399,9 @@
          .m-hero-logo img {
              width: 100%;
              height: 100%;
-             object-fit: contain;
+             object-fit: cover;
+             border-radius: 20px;
+             box-shadow: 0 8px 20px rgba(0,0,0,0.2);
              filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.7));
          }
         .m-hero-text-wrap {

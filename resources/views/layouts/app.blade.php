@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Nutrition Rescue Mission - LMS</title>
+    <title>{{ config('app.name') }} - LMS</title>
     <link rel="icon" type="image/webp" href="{{ route('brand.logo') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -85,52 +85,59 @@
             opacity: 0.6;
         }
         .nrn-bar-inner {
-            max-width: 1400px;
+            max-width: 100%;
             margin: 0 auto;
-            padding: 0 1.5rem;
+            padding: 0 2.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 60px;
-            gap: 1rem;
+            height: 100px;
+            gap: 2rem;
         }
 
         /* ── Logo cluster ───────────────────────────── */
         .nrn-logo-link {
             display: flex;
             align-items: center;
-            gap: 0.65rem;
+            gap: 1.2rem;
             text-decoration: none;
             flex-shrink: 0;
         }
         .nrn-logo-img {
-            height: 36px;
-            width: 36px;
+            height: 72px;
+            width: 72px;
             object-fit: contain;
-            transition: transform 0.3s ease;
+            background: white;
+            border-radius: 16px;
+            padding: 6px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.02);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .nrn-logo-link:hover .nrn-logo-img { transform: scale(1.05); }
+        .nrn-logo-link:hover .nrn-logo-img { 
+            transform: scale(1.1) rotate(-3deg);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+        }
         .nrn-logo-wordmark {
             display: flex;
             flex-direction: column;
-            gap: 0;
+            gap: 2px;
         }
         .nrn-logo-word1 {
             font-family: var(--font-display);
-            font-size: 0.78rem;
-            font-weight: 700;
+            font-size: 1.2rem;
+            font-weight: 850;
             color: var(--nav-navy);
-            line-height: 1.1;
-            letter-spacing: 0.01em;
+            line-height: 1;
+            letter-spacing: -0.02em;
         }
         .nrn-logo-word2 {
             font-family: var(--font-body);
-            font-size: 0.48rem;
-            font-weight: 700;
-            letter-spacing: 0.2em;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.18em;
             color: var(--nav-red);
             text-transform: uppercase;
-            line-height: 1.3;
+            line-height: 1.2;
         }
         @media (max-width: 480px) {
             .nrn-logo-wordmark { display: none; }
@@ -240,21 +247,27 @@
         /* Numeric notification badge */
         .nrn-badge-num {
             position: absolute;
-            top: -6px;
-            right: -6px;
-            background: #EF4444; /* red-500 */
+            top: -4px;
+            right: -4px;
+            background: linear-gradient(135deg, #FF4B2B, #FF416C);
             color: white;
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             font-weight: 800;
-            min-width: 16px;
-            height: 16px;
+            min-width: 18px;
+            height: 18px;
             border-radius: 9999px;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0 4px;
             border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(255, 75, 43, 0.3);
+            animation: nrn-pulse-red 2s infinite;
+        }
+        @keyframes nrn-pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(255, 75, 43, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0); }
         }
 
         /* ── Dropdown panel ─────────────────────────── */
@@ -790,8 +803,8 @@
 ════════════════════════════════════════════════════ --}}
 <div id="nrLoader" class="fixed inset-0 bg-white flex items-center justify-center z-[9999] opacity-100 transition-opacity duration-500" style="display:none">
     <div class="flex flex-col items-center gap-4">
-        <img src="{{ route('brand.logo') }}" alt="Nutrition Rescue Mission" class="w-24 h-24 sm:w-28 sm:h-28 object-contain">
-        <div style="font-family:var(--font-body);font-size:0.6rem;font-weight:700;letter-spacing:0.22em;color:var(--nav-navy);text-transform:uppercase">NUTRITION RESCUE MISSION</div>
+        <img src="{{ route('brand.logo') }}" alt="{{ config('app.name') }}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl shadow-lg">
+        <div style="font-family:var(--font-body);font-size:0.6rem;font-weight:700;letter-spacing:0.22em;color:var(--nav-navy);text-transform:uppercase">NUTRITION EDUCATION MISSION</div>
         <div class="w-8 h-8 border-2 border-gray-200 rounded-none" style="border-top-color:var(--nav-red);animation:spin 0.8s linear infinite"></div>
     </div>
 </div>
@@ -924,10 +937,10 @@
 
         {{-- Logo --}}
         <a href="{{ Auth::user()->role === 'admin' ? route('admin.dashboard') : route('dashboard') }}" class="nrn-logo-link">
-            <img src="{{ route('brand.logo') }}" alt="Nutrition Rescue Mission" class="nrn-logo-img">
+            <img src="{{ route('brand.logo') }}" alt="{{ config('app.name') }}" class="nrn-logo-img">
             <div class="nrn-logo-wordmark">
-                <span class="nrn-logo-word1">Nutrition Rescue</span>
-                <span class="nrn-logo-word2">Portal Nasional</span>
+                <span class="nrn-logo-word1">Nutrition Education</span>
+                <span class="nrn-logo-word2">Mission</span>
             </div>
         </a>
 

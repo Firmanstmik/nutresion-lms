@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('hero')
-<div class="nrm-root" style="padding-top: 12px;">
+<div class="nrm-root" style="padding-top: 28px;">
     {{-- ═══════════════════════════════════════════════════════════════
          HEADER BAND — National Identity Strip
     ═══════════════════════════════════════════════════════════════ --}}
@@ -17,7 +17,7 @@
                 </div>
                 <div class="nrm-identity-text">
                     <span class="nrm-ministry-label">SISTEM INFORMASI</span>
-                    <span class="nrm-ministry-name">NUTRITION RESCUE MISSION</span>
+                    <span class="nrm-ministry-name">NUTRITION EDUCATION MISSION</span>
                 </div>
             </div>
             <div class="nrm-identity-right">
