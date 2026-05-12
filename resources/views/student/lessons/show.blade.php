@@ -59,7 +59,88 @@
         <div class="card-premium overflow-hidden">
             <div class="aspect-video bg-black relative overflow-hidden">
                 @if($lesson->video_url)
-                    <iframe class="w-full h-full" src="{{ str_replace('watch?v=', 'embed/', $lesson->video_url) }}" frameborder="0" allowfullscreen></iframe>
+                    @php
+                        $videoUrl = trim((string) $lesson->video_url);
+                        $embedUrl = null;
+                        $videoId = null;
+                        $params = [
+                            'rel' => '0',
+                            'modestbranding' => '1',
+                            'playsinline' => '1',
+                        ];
+
+                        $toSeconds = function ($t) {
+                            $t = trim((string) $t);
+                            if ($t === '') return null;
+                            if (ctype_digit($t)) return (int) $t;
+                            if (preg_match('/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/i', $t, $m)) {
+                                $h = isset($m[1]) && $m[1] !== '' ? (int) $m[1] : 0;
+                                $min = isset($m[2]) && $m[2] !== '' ? (int) $m[2] : 0;
+                                $s = isset($m[3]) && $m[3] !== '' ? (int) $m[3] : 0;
+                                $total = ($h * 3600) + ($min * 60) + $s;
+                                return $total > 0 ? $total : null;
+                            }
+                            return null;
+                        };
+
+                        $parts = @parse_url($videoUrl) ?: [];
+                        $host = strtolower($parts['host'] ?? '');
+                        $path = (string) ($parts['path'] ?? '');
+                        $query = (string) ($parts['query'] ?? '');
+                        $q = [];
+                        parse_str($query, $q);
+
+                        if ($host !== '' && str_contains($host, 'youtu.be')) {
+                            $videoId = trim($path, '/');
+                        } elseif ($host !== '' && (str_contains($host, 'youtube.com') || str_contains($host, 'youtube-nocookie.com'))) {
+                            if (preg_match('#^/embed/([^/?]+)#', $path, $m)) {
+                                $videoId = $m[1];
+                            } elseif (preg_match('#^/shorts/([^/?]+)#', $path, $m)) {
+                                $videoId = $m[1];
+                            } elseif (preg_match('#^/live/([^/?]+)#', $path, $m)) {
+                                $videoId = $m[1];
+                            } elseif ($path === '/watch') {
+                                $videoId = $q['v'] ?? null;
+                            }
+
+                            if (!empty($q['list'])) {
+                                $params['list'] = $q['list'];
+                            }
+                            $start = $q['start'] ?? null;
+                            $t = $q['t'] ?? null;
+                            $sec = $toSeconds($start) ?? $toSeconds($t);
+                            if ($sec !== null) {
+                                $params['start'] = (string) $sec;
+                            }
+                        }
+
+                        if (is_string($videoId)) {
+                            $videoId = trim($videoId);
+                            if ($videoId !== '') {
+                                $embedUrl = 'https://www.youtube-nocookie.com/embed/'.$videoId;
+                                if (count($params) > 0) {
+                                    $embedUrl .= '?'.http_build_query($params);
+                                }
+                            }
+                        }
+                    @endphp
+
+                    @if($embedUrl)
+                        <iframe
+                            class="w-full h-full"
+                            src="{{ $embedUrl }}"
+                            title="{{ $lesson->title }}"
+                            frameborder="0"
+                            loading="lazy"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen
+                        ></iframe>
+                    @else
+                        <div class="absolute inset-0 flex items-center justify-center text-white text-sm font-bold px-6 text-center">
+                            Link video tidak valid untuk diputar. Pastikan link YouTube benar (contoh: https://youtu.be/xxxx atau https://www.youtube.com/watch?v=xxxx).
+                        </div>
+                    @endif
                 @else
                     <img src="{{ $lesson->course->thumbnail ? asset('storage/' . $lesson->course->thumbnail) : route('brand.hero') }}"
                          class="w-full h-full object-cover" alt="{{ $lesson->title }}">
