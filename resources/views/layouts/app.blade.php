@@ -94,6 +94,13 @@
             height: 100px;
             gap: 2rem;
         }
+        @media (max-width: 639px) {
+            .nrn-bar-inner {
+                padding: 0 1rem;
+                height: 76px;
+                gap: 1rem;
+            }
+        }
 
         /* ── Logo cluster ───────────────────────────── */
         .nrn-logo-link {
@@ -112,6 +119,15 @@
             padding: 6px;
             box-shadow: 0 6px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.02);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @media (max-width: 639px) {
+            .nrn-logo-link { gap: 0.8rem; }
+            .nrn-logo-img {
+                height: 56px;
+                width: 56px;
+                border-radius: 14px;
+                padding: 5px;
+            }
         }
         .nrn-logo-link:hover .nrn-logo-img { 
             transform: scale(1.1) rotate(-3deg);
@@ -208,6 +224,9 @@
             gap: 0.5rem;
             flex-shrink: 0;
         }
+        @media (max-width: 639px) {
+            .nrn-actions { gap: 0.4rem; }
+        }
 
         /* ── Icon button (notif, etc) ───────────────── */
         .nrn-icon-btn {
@@ -223,6 +242,9 @@
             color: var(--nav-muted);
             cursor: pointer;
             transition: all 0.2s ease;
+        }
+        @media (max-width: 639px) {
+            .nrn-icon-btn { width: 34px; height: 34px; }
         }
         .nrn-icon-btn:hover {
             background: rgba(11,30,63,0.04);
@@ -521,6 +543,9 @@
         }
         @media (min-width: 640px) { .nrn-user-btn { display: flex; } }
         .nr-admin .nrn-user-btn { display: flex; }
+        @media (max-width: 639px) {
+            .nr-admin .nrn-user-btn { padding: 0.35rem 0.55rem 0.35rem 0.45rem; gap: 0.5rem; }
+        }
         .nrn-user-btn:hover {
             background: rgba(11,30,63,0.03);
             border-color: rgba(11,30,63,0.15);
@@ -538,6 +563,9 @@
             font-size: 0.85rem;
             font-weight: 700;
             flex-shrink: 0;
+        }
+        @media (max-width: 639px) {
+            .nrn-user-avatar { width: 28px; height: 28px; font-size: 0.8rem; }
         }
         /* Student avatar uses teal */
         .nrn-user-avatar-student {
