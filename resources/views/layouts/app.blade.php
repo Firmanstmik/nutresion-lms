@@ -520,6 +520,7 @@
             transition: all 0.2s ease;
         }
         @media (min-width: 640px) { .nrn-user-btn { display: flex; } }
+        .nr-admin .nrn-user-btn { display: flex; }
         .nrn-user-btn:hover {
             background: rgba(11,30,63,0.03);
             border-color: rgba(11,30,63,0.15);
@@ -553,6 +554,14 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .nrn-user-name-mobile {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--nav-ink);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        @media (min-width: 640px) { .nrn-user-name-mobile { display: none; } }
         .nrn-user-chevron {
             width: 12px;
             height: 12px;
@@ -793,7 +802,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="text-text-main antialiased {{ Auth::check() && Auth::user()->role !== 'admin' ? 'nr-student' : '' }} @yield('body-class')"
+<body class="text-text-main antialiased {{ Auth::check() && Auth::user()->role !== 'admin' ? 'nr-student' : '' }} {{ Auth::check() && Auth::user()->role === 'admin' ? 'nr-admin' : '' }} @yield('body-class')"
         style="font-family: var(--font-body); --bg-image: url('{{ route('brand.bg-lms') }}'); --bg-desktop: url('{{ route('brand.bg-desktop') }}'); --bg-mobile: url('{{ route('brand.bg-mobile') }}');">
 
 <div class="bg-fixed-overlay"></div>
@@ -1134,6 +1143,9 @@
                     <div class="nrn-user-avatar {{ Auth::user()->role !== 'admin' ? 'nrn-user-avatar-student' : '' }}">
                         {{ mb_substr(Auth::user()->name, 0, 1) }}
                     </div>
+                    @if(Auth::user()->role === 'admin')
+                        <span class="nrn-user-name-mobile">Admin LMS</span>
+                    @endif
                     <span class="nrn-user-name hidden md:block">{{ Auth::user()->name }}</span>
                     <svg class="nrn-user-chevron" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.24 4.5a.75.75 0 0 1-1.08 0l-4.24-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/>
@@ -1323,16 +1335,13 @@ if (typeof NProgress !== 'undefined') {
     document.addEventListener('turbo:render', () => NProgress.done());
 }
 
-document.addEventListener('turbo:load', () => {
-
-    /* ── Page loader (Fallback) ─────────────────── */
+const nrnSetupUI = () => {
     const loader = document.getElementById('nrLoader');
     if (loader) {
         loader.classList.add('opacity-0');
         window.setTimeout(() => { loader.style.display = 'none'; }, 500);
     }
 
-    /* ── Dropdown helpers ────────────────────────── */
     const userBtn        = document.getElementById('nrUserMenuBtn');
     const userMenu       = document.getElementById('nrUserMenu');
     const notifBtn       = document.getElementById('nrNotifBtn');
@@ -1340,44 +1349,82 @@ document.addEventListener('turbo:load', () => {
     const adminNotifBtn  = document.getElementById('nrAdminNotifBtn');
     const adminNotifMenu = document.getElementById('nrAdminNotifMenu');
 
-    const closeUserMenu       = () => { if (!userMenu  || !userBtn)        return; userMenu.classList.add('hidden');       userBtn.setAttribute('aria-expanded','false'); };
-    const closeNotifMenu      = () => { if (!notifMenu || !notifBtn)       return; notifMenu.classList.add('hidden');      notifBtn.setAttribute('aria-expanded','false'); };
-    const closeAdminNotifMenu = () => { if (!adminNotifMenu || !adminNotifBtn) return; adminNotifMenu.classList.add('hidden'); adminNotifBtn.setAttribute('aria-expanded','false'); };
+    const closeUserMenu = () => {
+        if (!userMenu || !userBtn) return;
+        userMenu.classList.add('hidden');
+        userBtn.setAttribute('aria-expanded', 'false');
+    };
+    const closeNotifMenu = () => {
+        if (!notifMenu || !notifBtn) return;
+        notifMenu.classList.add('hidden');
+        notifBtn.setAttribute('aria-expanded', 'false');
+    };
+    const closeAdminNotifMenu = () => {
+        if (!adminNotifMenu || !adminNotifBtn) return;
+        adminNotifMenu.classList.add('hidden');
+        adminNotifBtn.setAttribute('aria-expanded', 'false');
+    };
 
     if (userBtn && userMenu) {
-        userBtn.addEventListener('click', e => {
+        userBtn.onclick = (e) => {
             e.stopPropagation();
             const hidden = userMenu.classList.contains('hidden');
-            closeNotifMenu(); closeAdminNotifMenu();
+            closeNotifMenu();
+            closeAdminNotifMenu();
             userMenu.classList.toggle('hidden', !hidden);
             userBtn.setAttribute('aria-expanded', hidden ? 'true' : 'false');
-        });
+        };
     }
     if (notifBtn && notifMenu) {
-        notifBtn.addEventListener('click', e => {
+        notifBtn.onclick = (e) => {
             e.stopPropagation();
             const hidden = notifMenu.classList.contains('hidden');
-            closeUserMenu(); closeAdminNotifMenu();
+            closeUserMenu();
+            closeAdminNotifMenu();
             notifMenu.classList.toggle('hidden', !hidden);
             notifBtn.setAttribute('aria-expanded', hidden ? 'true' : 'false');
-        });
+        };
     }
     if (adminNotifBtn && adminNotifMenu) {
-        adminNotifBtn.addEventListener('click', e => {
+        adminNotifBtn.onclick = (e) => {
             e.stopPropagation();
             const hidden = adminNotifMenu.classList.contains('hidden');
-            closeUserMenu(); closeNotifMenu();
+            closeUserMenu();
+            closeNotifMenu();
             adminNotifMenu.classList.toggle('hidden', !hidden);
             adminNotifBtn.setAttribute('aria-expanded', hidden ? 'true' : 'false');
+        };
+    }
+
+    if (!window.__nrnDocHandlersBound) {
+        window.__nrnDocHandlersBound = true;
+        document.addEventListener('click', () => {
+            const uBtn = document.getElementById('nrUserMenuBtn');
+            const uMenu = document.getElementById('nrUserMenu');
+            const nBtn = document.getElementById('nrNotifBtn');
+            const nMenu = document.getElementById('nrNotifMenu');
+            const aBtn = document.getElementById('nrAdminNotifBtn');
+            const aMenu = document.getElementById('nrAdminNotifMenu');
+
+            if (uBtn && uMenu) { uMenu.classList.add('hidden'); uBtn.setAttribute('aria-expanded', 'false'); }
+            if (nBtn && nMenu) { nMenu.classList.add('hidden'); nBtn.setAttribute('aria-expanded', 'false'); }
+            if (aBtn && aMenu) { aMenu.classList.add('hidden'); aBtn.setAttribute('aria-expanded', 'false'); }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const uBtn = document.getElementById('nrUserMenuBtn');
+            const uMenu = document.getElementById('nrUserMenu');
+            const nBtn = document.getElementById('nrNotifBtn');
+            const nMenu = document.getElementById('nrNotifMenu');
+            const aBtn = document.getElementById('nrAdminNotifBtn');
+            const aMenu = document.getElementById('nrAdminNotifMenu');
+
+            if (uBtn && uMenu) { uMenu.classList.add('hidden'); uBtn.setAttribute('aria-expanded', 'false'); }
+            if (nBtn && nMenu) { nMenu.classList.add('hidden'); nBtn.setAttribute('aria-expanded', 'false'); }
+            if (aBtn && aMenu) { aMenu.classList.add('hidden'); aBtn.setAttribute('aria-expanded', 'false'); }
         });
     }
 
-    document.addEventListener('click', () => { closeUserMenu(); closeNotifMenu(); closeAdminNotifMenu(); });
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeUserMenu(); closeNotifMenu(); closeAdminNotifMenu(); }
-    });
-
-    /* ── Progress bars ───────────────────────────── */
     document.querySelectorAll('[data-progress]').forEach(el => {
         const raw = el.getAttribute('data-progress');
         const value = Number.parseFloat(raw ?? '');
@@ -1385,11 +1432,13 @@ document.addEventListener('turbo:load', () => {
         el.style.width = `${Math.max(0, Math.min(100, value))}%`;
     });
 
-    /* ── Lucide Icons ────────────────────────────── */
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
-});
+};
+
+document.addEventListener('turbo:load', nrnSetupUI);
+document.addEventListener('DOMContentLoaded', nrnSetupUI);
 </script>
 
 @yield('scripts')
