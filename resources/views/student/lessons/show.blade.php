@@ -7,56 +7,56 @@
     $lessonPct = max(0, min(100, $lessonPct));
 @endphp
 
-<div class="min-h-screen -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 sm:-mt-10 bg-bg-main">
-    <div class="relative overflow-hidden pt-10 sm:pt-14 pb-8 sm:pb-10 px-4 sm:px-6 lg:px-8">
-        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl opacity-60"></div>
-        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-secondary/5 rounded-full blur-3xl opacity-60"></div>
+<div class="nrl-lesson-page min-h-screen -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 sm:-mt-10 bg-bg-main">
+    <div class="relative overflow-hidden pt-5 sm:pt-14 pb-5 sm:pb-10 px-4 sm:px-6 lg:px-8">
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl opacity-60 hidden sm:block"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-secondary/5 rounded-full blur-3xl opacity-60 hidden sm:block"></div>
 
         <div class="relative max-w-5xl mx-auto">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-                <a href="{{ route('courses.detail', $lesson->course_id) }}" class="inline-flex items-center gap-3 font-black text-xs uppercase tracking-widest text-primary hover:text-primary-light transition-colors">
-                    <span class="w-11 h-11 rounded-2xl bg-white border border-border-subtle shadow-sm flex items-center justify-center">
-                        <i class="fas fa-arrow-left text-sm"></i>
+            <div class="flex items-center justify-between gap-3">
+                <a href="{{ route('courses.detail', $lesson->course_id) }}" class="inline-flex items-center gap-2.5 font-bold text-[11px] sm:text-xs uppercase tracking-widest text-primary hover:text-primary-light transition-colors">
+                    <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-white border border-border-subtle shadow-sm flex items-center justify-center">
+                        <i class="fas fa-arrow-left text-xs sm:text-sm"></i>
                     </span>
-                    Kembali ke Detail
+                    <span class="hidden xs:inline sm:inline">Kembali</span>
                 </a>
 
-                <div class="flex items-center gap-4">
-                    <div class="hidden sm:flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="flex items-center gap-1.5 text-[10px] font-bold text-text-muted uppercase tracking-widest shrink-0">
                         <span>Bab {{ $lesson->order_number }}</span>
                         <span class="opacity-40">/</span>
                         <span>{{ $lessonTotalCount }}</span>
                     </div>
-                    <div class="w-44 sm:w-56 h-2 rounded-full bg-white border border-border-subtle overflow-hidden">
+                    <div class="w-24 sm:w-56 h-1.5 sm:h-2 rounded-full bg-white border border-border-subtle overflow-hidden">
                         <div class="h-full bg-primary transition-all duration-700" @style(['width' => $lessonPct . '%'])></div>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-8">
-                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white border border-border-subtle shadow-sm text-[10px] font-black uppercase tracking-widest text-text-secondary">
-                    <span class="w-2 h-2 rounded-full bg-primary"></span>
+            <div class="mt-4 sm:mt-8">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl bg-white border border-border-subtle shadow-sm text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-text-secondary">
+                    <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary"></span>
                     Materi Pembelajaran
                 </div>
-                <h1 class="mt-4 text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-text-main">
+                <h1 class="mt-2.5 sm:mt-4 text-[1.35rem] sm:text-5xl font-extrabold tracking-tight leading-snug text-text-main">
                     {{ $lesson->title }}
                 </h1>
-                <div class="mt-3 flex flex-wrap items-center gap-3 text-xs font-bold text-text-muted">
-                    <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-border-subtle">
-                        <i class="fas fa-calendar-alt text-primary text-[11px]"></i>
-                        Diupdate {{ $lesson->updated_at?->format('d M Y') }}
+                <div class="mt-2.5 sm:mt-3 flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-bold text-text-muted">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl bg-white border border-border-subtle">
+                        <i class="fas fa-calendar-alt text-primary text-[10px]"></i>
+                        {{ $lesson->updated_at?->format('d M Y') }}
                     </span>
-                    <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-border-subtle">
-                        <i class="fas fa-book text-primary text-[11px]"></i>
-                        {{ $lesson->course->title }}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl bg-white border border-border-subtle max-w-full truncate">
+                        <i class="fas fa-book text-primary text-[10px]"></i>
+                        <span class="truncate">{{ $lesson->course->title }}</span>
                     </span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
-        <div class="card-premium overflow-hidden">
+    <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 pb-28 sm:pb-24">
+        <div class="card-premium overflow-hidden nrl-lesson-card">
             <div class="aspect-video bg-black relative overflow-hidden">
                 @if($lesson->video_url)
                     @php
@@ -168,34 +168,34 @@
                 @endif
             </div>
 
-            <div class="p-7 sm:p-10 lg:p-12">
+            <div class="nrl-lesson-body p-4 sm:p-10 lg:p-12">
                 @php
                     $lessonContent = $lesson->content ?? '';
                     $hasHtml = \Illuminate\Support\Str::contains($lessonContent, ['<img', '<p', '<br', '<div', '<h', '<ul', '<ol', '<table']);
                 @endphp
-                <div class="text-text-secondary text-sm sm:text-base leading-relaxed font-medium space-y-6 nrl-lesson-content">
+                <div class="nrl-lesson-content" id="nrlLessonContent">
                     {!! $hasHtml ? $lessonContent : nl2br(e($lessonContent)) !!}
                 </div>
 
-                <div class="mt-10 pt-8 border-t border-border-soft flex flex-col sm:flex-row items-center justify-between gap-6">
-                    <div class="flex items-center gap-4 p-5 rounded-2xl bg-primary-soft/40 border border-border-subtle w-full sm:w-auto">
-                        <div class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-sm">
-                            <i class="fas fa-lightbulb"></i>
+                <div class="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border-soft flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
+                    <div class="flex items-center gap-3 p-3.5 sm:p-5 rounded-2xl bg-primary-soft/40 border border-border-subtle w-full sm:w-auto">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center text-white shadow-sm shrink-0">
+                            <i class="fas fa-lightbulb text-sm sm:text-base"></i>
                         </div>
-                        <p class="text-sm font-extrabold text-text-main leading-tight">Pastikan Anda telah membaca<br>seluruh materi dengan teliti.</p>
+                        <p class="text-xs sm:text-sm font-bold text-text-main leading-snug">Pastikan kamu sudah membaca seluruh materi dengan teliti.</p>
                     </div>
 
                     @if(!$is_completed)
                     <form action="{{ route('lessons.complete', $lesson->id) }}" method="POST" class="w-full sm:w-auto">
                         @csrf
-                        <button type="submit" class="btn-primary w-full py-4 px-10 text-sm uppercase tracking-widest font-extrabold flex items-center justify-center gap-3">
+                        <button type="submit" class="btn-primary w-full py-3.5 sm:py-4 px-8 sm:px-10 text-xs sm:text-sm uppercase tracking-widest font-extrabold flex items-center justify-center gap-3">
                             Tandai Selesai <i class="fas fa-check-circle text-xs"></i>
                         </button>
                     </form>
                     @else
-                    <div class="flex items-center gap-3 px-8 py-4 bg-green-50 text-green-700 font-extrabold rounded-2xl border border-green-100 shadow-inner w-full sm:w-auto justify-center">
-                        <i class="fas fa-check-double text-lg"></i>
-                        <span class="uppercase tracking-widest text-xs">Materi Selesai</span>
+                    <div class="flex items-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 bg-green-50 text-green-700 font-extrabold rounded-2xl border border-green-100 shadow-inner w-full sm:w-auto justify-center">
+                        <i class="fas fa-check-double text-base sm:text-lg"></i>
+                        <span class="uppercase tracking-widest text-[11px] sm:text-xs">Materi Selesai</span>
                     </div>
                     @endif
                 </div>
@@ -205,34 +205,295 @@
 </div>
 
 <style>
-.nrl-lesson-content br { display: block; content: ""; margin-top: 0.85rem; }
-.nrl-lesson-content img { max-width: 100%; height: auto; border-radius: 18px; }
+.nrl-lesson-page {
+    --nrl-ink: #1e293b;
+    --nrl-muted: #64748b;
+    --nrl-line: #e2e8f0;
+    --nrl-soft: #f8fafc;
+    --nrl-accent: #0f7e6e;
+}
+
+.nrl-lesson-card {
+    border-radius: 18px;
+}
+@media (max-width: 639px) {
+    .nrl-lesson-card {
+        border-radius: 14px;
+        box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+    }
+}
+
+.nrl-lesson-content {
+    color: var(--nrl-muted);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+@media (min-width: 640px) {
+    .nrl-lesson-content {
+        font-size: 1rem;
+        line-height: 1.75;
+    }
+}
+
+/* Neutralize TinyMCE inline sizing so mobile stays readable */
+.nrl-lesson-content,
+.nrl-lesson-content * {
+    max-width: 100%;
+}
+.nrl-lesson-content [style*="font-size"] {
+    font-size: inherit !important;
+}
+.nrl-lesson-content [style*="line-height"] {
+    line-height: inherit !important;
+}
+
+.nrl-lesson-content > *:first-child { margin-top: 0 !important; }
+.nrl-lesson-content > *:last-child { margin-bottom: 0 !important; }
+
+.nrl-lesson-content p {
+    margin: 0 0 0.9rem;
+    color: var(--nrl-muted);
+}
+.nrl-lesson-content br {
+    display: block;
+    content: "";
+    margin-top: 0.55rem;
+}
+
+.nrl-lesson-content h1,
+.nrl-lesson-content h2,
+.nrl-lesson-content h3,
+.nrl-lesson-content h4,
+.nrl-lesson-content strong:has(+ br),
+.nrl-lesson-content p > strong:only-child {
+    color: var(--nrl-ink);
+}
+
+.nrl-lesson-content h1 {
+    font-size: 1.15rem;
+    line-height: 1.35;
+    font-weight: 800;
+    margin: 1.25rem 0 0.65rem;
+    letter-spacing: -0.02em;
+}
+.nrl-lesson-content h2 {
+    font-size: 1.05rem;
+    line-height: 1.35;
+    font-weight: 800;
+    margin: 1.15rem 0 0.55rem;
+}
+.nrl-lesson-content h3,
+.nrl-lesson-content h4 {
+    font-size: 0.98rem;
+    line-height: 1.4;
+    font-weight: 700;
+    margin: 1rem 0 0.45rem;
+}
+@media (min-width: 640px) {
+    .nrl-lesson-content h1 { font-size: 1.4rem; }
+    .nrl-lesson-content h2 { font-size: 1.2rem; }
+    .nrl-lesson-content h3 { font-size: 1.05rem; }
+}
+
+.nrl-lesson-content img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 14px;
+    margin: 0.85rem 0 1.1rem;
+}
+.nrl-lesson-content figure {
+    margin: 0.85rem 0 1.1rem;
+}
+.nrl-lesson-content figcaption {
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-align: center;
+}
+
 .nrl-lesson-content ul,
 .nrl-lesson-content ol {
-    padding-left: 1.35rem;
-    margin: 0.9rem 0;
+    padding-left: 1.2rem;
+    margin: 0.55rem 0 0.95rem;
 }
 .nrl-lesson-content ul { list-style: disc; }
 .nrl-lesson-content ol { list-style: decimal; }
-.nrl-lesson-content li { margin: 0.35rem 0; }
+.nrl-lesson-content li {
+    margin: 0.28rem 0;
+    padding-left: 0.15rem;
+}
 .nrl-lesson-content ul ul { list-style: circle; }
 .nrl-lesson-content ol ol { list-style: lower-alpha; }
 .nrl-lesson-content ol ol ol { list-style: lower-roman; }
-.nrl-lesson-content table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1rem 0;
-    overflow: hidden;
-    border-radius: 14px;
+
+.nrl-lesson-content a {
+    color: var(--nrl-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
+
+.nrl-lesson-content blockquote {
+    margin: 0.9rem 0;
+    padding: 0.75rem 0.9rem;
+    border-left: 3px solid var(--nrl-accent);
+    background: var(--nrl-soft);
+    border-radius: 0 12px 12px 0;
+    color: var(--nrl-ink);
+    font-size: 0.9rem;
+}
+
+/* Tables: scroll container + polished look */
+.nrl-table-scroll {
+    position: relative;
+    margin: 0.85rem 0 1.15rem;
+    border: 1px solid var(--nrl-line);
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+}
+.nrl-table-scroll::after {
+    content: "Geser ← →";
+    position: absolute;
+    top: 0.45rem;
+    right: 0.55rem;
+    z-index: 2;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.72);
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.nrl-table-scroll.is-scrollable::after { opacity: 1; }
+@media (min-width: 640px) {
+    .nrl-table-scroll::after { display: none; }
+}
+
+.nrl-table-scroll-inner {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #94a3b8 transparent;
+}
+.nrl-table-scroll-inner::-webkit-scrollbar {
+    height: 6px;
+}
+.nrl-table-scroll-inner::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.nrl-lesson-content table {
+    width: max-content;
+    min-width: 100%;
+    max-width: none !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--nrl-ink);
+}
+@media (min-width: 640px) {
+    .nrl-lesson-content table { font-size: 0.875rem; }
+}
+
 .nrl-lesson-content table th,
 .nrl-lesson-content table td {
-    border: 1px solid rgba(229,231,235,1);
-    padding: 0.65rem 0.75rem;
+    border: none;
+    border-bottom: 1px solid var(--nrl-line);
+    border-right: 1px solid var(--nrl-line);
+    padding: 0.55rem 0.7rem;
+    vertical-align: top;
+    text-align: left;
+    white-space: normal;
+    min-width: 7.5rem;
+}
+.nrl-lesson-content table th:last-child,
+.nrl-lesson-content table td:last-child {
+    border-right: none;
+}
+.nrl-lesson-content table tr:last-child td {
+    border-bottom: none;
 }
 .nrl-lesson-content table th {
-    background: rgba(243,244,246,1);
+    background: #f1f5f9;
+    color: #0f172a;
     font-weight: 800;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+@media (min-width: 640px) {
+    .nrl-lesson-content table th { font-size: 0.8rem; }
+    .nrl-lesson-content table th,
+    .nrl-lesson-content table td { padding: 0.7rem 0.85rem; }
+}
+.nrl-lesson-content table tbody tr:nth-child(even) td {
+    background: #f8fafc;
+}
+.nrl-lesson-content table tbody tr:active td {
+    background: #ecfeff;
+}
+
+.nrl-lesson-content iframe,
+.nrl-lesson-content video {
+    max-width: 100%;
+    border-radius: 12px;
 }
 </style>
+
+<script>
+(function () {
+    const root = document.getElementById('nrlLessonContent');
+    if (!root) return;
+
+    root.querySelectorAll('table').forEach((table) => {
+        if (table.closest('.nrl-table-scroll')) return;
+
+        table.removeAttribute('width');
+        table.style.width = '';
+        table.style.maxWidth = '';
+        table.querySelectorAll('td, th, col').forEach((cell) => {
+            cell.removeAttribute('width');
+            if (cell.style) {
+                cell.style.width = '';
+                cell.style.minWidth = '';
+            }
+        });
+
+        const wrap = document.createElement('div');
+        wrap.className = 'nrl-table-scroll';
+        const inner = document.createElement('div');
+        inner.className = 'nrl-table-scroll-inner';
+
+        table.parentNode.insertBefore(wrap, table);
+        wrap.appendChild(inner);
+        inner.appendChild(table);
+
+        const markScrollable = () => {
+            wrap.classList.toggle('is-scrollable', inner.scrollWidth > inner.clientWidth + 4);
+        };
+        markScrollable();
+        window.addEventListener('resize', markScrollable, { passive: true });
+        if (window.ResizeObserver) {
+            new ResizeObserver(markScrollable).observe(inner);
+        }
+    });
+})();
+</script>
 @endsection
