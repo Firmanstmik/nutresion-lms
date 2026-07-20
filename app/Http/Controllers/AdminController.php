@@ -516,32 +516,16 @@ class AdminController extends Controller
 
     public function storeQuestion(Request $request, int $course_id)
     {
-        $request->validate([
-            'question' => 'required|string',
-            'option_a' => 'required|string',
-            'option_b' => 'required|string',
-            'option_c' => 'required|string',
-            'option_d' => 'required|string',
-            'correct_answer' => 'required|in:A,B,C,D',
-        ]);
-
-        Question::create(array_merge($request->all(), ['course_id' => $course_id, 'type' => 'post']));
+        $data = $this->validatedQuestionPayload($request);
+        Question::create(array_merge($data, ['course_id' => $course_id, 'type' => 'post']));
 
         return back()->with('success', 'Question added successfully');
     }
 
     public function storePreQuestion(Request $request, int $course_id)
     {
-        $request->validate([
-            'question' => 'required|string',
-            'option_a' => 'required|string',
-            'option_b' => 'required|string',
-            'option_c' => 'required|string',
-            'option_d' => 'required|string',
-            'correct_answer' => 'required|in:A,B,C,D',
-        ]);
-
-        Question::create(array_merge($request->all(), ['course_id' => $course_id, 'type' => 'pre']));
+        $data = $this->validatedQuestionPayload($request);
+        Question::create(array_merge($data, ['course_id' => $course_id, 'type' => 'pre']));
 
         return back()->with('success', 'Question added successfully');
     }
@@ -549,8 +533,37 @@ class AdminController extends Controller
     public function updateQuestion(Request $request, int $id)
     {
         $question = Question::findOrFail($id);
+        $question->update($this->validatedQuestionPayload($request));
+
+        return back()->with('success', 'Question updated successfully');
+    }
+
+    private function validatedQuestionPayload(Request $request): array
+    {
+        $format = $request->input('format', Question::FORMAT_MULTIPLE_CHOICE);
+
+        if ($format === Question::FORMAT_LIKERT) {
+            $request->validate([
+                'question' => 'required|string',
+                'format' => 'required|in:multiple_choice,likert',
+                'polarity' => 'required|in:positive,negative',
+            ]);
+
+            return [
+                'question' => $request->question,
+                'format' => Question::FORMAT_LIKERT,
+                'polarity' => $request->polarity,
+                'option_a' => Question::LIKERT_OPTIONS[5],
+                'option_b' => Question::LIKERT_OPTIONS[4],
+                'option_c' => Question::LIKERT_OPTIONS[3],
+                'option_d' => Question::LIKERT_OPTIONS[2],
+                'correct_answer' => null,
+            ];
+        }
+
         $request->validate([
             'question' => 'required|string',
+            'format' => 'nullable|in:multiple_choice,likert',
             'option_a' => 'required|string',
             'option_b' => 'required|string',
             'option_c' => 'required|string',
@@ -558,9 +571,16 @@ class AdminController extends Controller
             'correct_answer' => 'required|in:A,B,C,D',
         ]);
 
-        $question->update($request->only(['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer']));
-
-        return back()->with('success', 'Question updated successfully');
+        return [
+            'question' => $request->question,
+            'format' => Question::FORMAT_MULTIPLE_CHOICE,
+            'polarity' => null,
+            'option_a' => $request->option_a,
+            'option_b' => $request->option_b,
+            'option_c' => $request->option_c,
+            'option_d' => $request->option_d,
+            'correct_answer' => $request->correct_answer,
+        ];
     }
 
     public function destroyQuestion(int $id)

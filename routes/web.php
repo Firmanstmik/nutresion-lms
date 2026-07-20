@@ -11,31 +11,45 @@ use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/brand/logo.webp', function () {
-    return response()->file(resource_path('img/New Logo Nutression.webp'));
+    return response()->file(resource_path('img/New Logo Nutression.webp'), [
+        'Cache-Control' => 'public, max-age=604800, immutable',
+    ]);
 })->name('brand.logo');
 
 Route::get('/brand/bg-lms.webp', function () {
-    return response()->file(resource_path('img/bg lms.webp'));
+    return response()->file(resource_path('img/bg lms.webp'), [
+        'Cache-Control' => 'public, max-age=604800, immutable',
+    ]);
 })->name('brand.bg-lms');
 
 Route::get('/brand/bg-desktop.webp', function () {
-    return response()->file(resource_path('img/bgdesktop.webp'));
+    return response()->file(resource_path('img/bgdesktop.webp'), [
+        'Cache-Control' => 'public, max-age=604800, immutable',
+    ]);
 })->name('brand.bg-desktop');
 
 Route::get('/brand/bg-mobile.webp', function () {
-    return response()->file(resource_path('img/bgmobile.webp'));
+    return response()->file(resource_path('img/bgmobile.webp'), [
+        'Cache-Control' => 'public, max-age=604800, immutable',
+    ]);
 })->name('brand.bg-mobile');
 
 Route::get('/brand/hero.webp', function () {
-    return response()->file(resource_path('img/hero dashboard.webp'));
+    return response()->file(resource_path('img/hero dashboard.webp'), [
+        'Cache-Control' => 'public, max-age=604800, immutable',
+    ]);
 })->name('brand.hero');
 
 Route::get('/brand/hero-admin.webp', function () {
-    return response()->file(resource_path('img/hero admin.webp'));
+    return response()->file(resource_path('img/hero admin.webp'), [
+        'Cache-Control' => 'public, max-age=604800, immutable',
+    ]);
 })->name('brand.hero-admin');
 
 Route::get('/brand/belajar-nutrition.webp', function () {
-    return response()->file(resource_path('img/Nutresion Image.webp'));
+    return response()->file(resource_path('img/Nutresion Image.webp'), [
+        'Cache-Control' => 'public, max-age=604800, immutable',
+    ]);
 })->name('brand.belajar-nutrition');
 
 // Auth Routes
@@ -107,6 +121,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/courses/{course_id}/questions', [AdminController::class, 'questions'])->name('questions.index');
     Route::get('/courses/{course_id}/pre-questions', [AdminController::class, 'preQuestions'])->name('pre_questions.index');
     Route::post('/courses/{course_id}/pre-questions', [AdminController::class, 'storePreQuestion'])->name('pre_questions.store');
+    Route::put('/pre-questions/{id}', [AdminController::class, 'updateQuestion'])->name('pre_questions.update');
     Route::delete('/pre-questions/{id}', [AdminController::class, 'destroyPreQuestion'])->name('pre_questions.destroy');
     Route::post('/courses/{course_id}/questions', [AdminController::class, 'storeQuestion'])->name('questions.store');
     Route::put('/questions/{id}', [AdminController::class, 'updateQuestion'])->name('questions.update');

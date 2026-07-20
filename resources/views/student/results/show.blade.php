@@ -72,10 +72,17 @@
                         <div class="rsx-stat-label">Tes</div>
                         <div class="rsx-stat-val">{{ $typeLabel }}</div>
                     </div>
-                    <div class="rsx-stat">
-                        <div class="rsx-stat-label">Kursus</div>
-                        <div class="rsx-stat-val">{{ Str::limit($result->course->title, 22) }}</div>
-                    </div>
+                    @if(!is_null($result->mc_score) || !is_null($result->likert_score))
+                        <div class="rsx-stat">
+                            <div class="rsx-stat-label">PG / Sikap</div>
+                            <div class="rsx-stat-val">{{ $result->mc_score ?? '—' }} / {{ $result->likert_score ?? '—' }}</div>
+                        </div>
+                    @else
+                        <div class="rsx-stat">
+                            <div class="rsx-stat-label">Kursus</div>
+                            <div class="rsx-stat-val">{{ Str::limit($result->course->title, 22) }}</div>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="rsx-sep"></div>
@@ -169,23 +176,52 @@
                         @php
                             $q = $answer->question;
                             $selected = $answer->selected_answer;
+                            $isLikert = $q && method_exists($q, 'isLikert') ? $q->isLikert() : false;
                             $correct = $q?->correct_answer;
                             $isCorrect = (bool) $answer->is_correct;
+                            $points = $answer->points;
                         @endphp
                         <div class="rsx-q">
                             <div class="rsx-q-head">
-                                <div class="rsx-q-num {{ $isCorrect ? 'rsx-q-ok' : 'rsx-q-bad' }}">{{ $idx + 1 }}</div>
+                                <div class="rsx-q-num {{ $isLikert ? ($points !== null && $points >= 4 ? 'rsx-q-ok' : 'rsx-q-bad') : ($isCorrect ? 'rsx-q-ok' : 'rsx-q-bad') }}">{{ $idx + 1 }}</div>
                                 <div class="rsx-q-body">
                                     <div class="rsx-q-title">{{ $q?->question ?? 'Soal tidak ditemukan' }}</div>
                                     <div class="rsx-q-meta">
-                                        <span class="rsx-q-tag {{ $isCorrect ? 'rsx-tag-ok' : 'rsx-tag-bad' }}">{{ $isCorrect ? 'Benar' : 'Salah' }}</span>
-                                        <span class="rsx-q-tag rsx-tag-neutral">Jawaban kamu: <strong>{{ $selected ?? '—' }}</strong></span>
-                                        <span class="rsx-q-tag rsx-tag-neutral">Kunci: <strong>{{ $correct ?? '—' }}</strong></span>
+                                        @if($isLikert)
+                                            <span class="rsx-q-tag rsx-tag-neutral">Sikap (Likert)</span>
+                                            <span class="rsx-q-tag rsx-tag-neutral">Jawaban: <strong>{{ \App\Models\Question::likertLabel($selected) }}</strong></span>
+                                            <span class="rsx-q-tag {{ $points !== null && $points >= 4 ? 'rsx-tag-ok' : 'rsx-tag-bad' }}">Poin: <strong>{{ $points ?? '—' }}/5</strong></span>
+                                        @else
+                                            <span class="rsx-q-tag {{ $isCorrect ? 'rsx-tag-ok' : 'rsx-tag-bad' }}">{{ $isCorrect ? 'Benar' : 'Salah' }}</span>
+                                            <span class="rsx-q-tag rsx-tag-neutral">Jawaban kamu: <strong>{{ $selected ?? '—' }}</strong></span>
+                                            <span class="rsx-q-tag rsx-tag-neutral">Kunci: <strong>{{ $correct ?? '—' }}</strong></span>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
 
-                            @if($q)
+                            @if($q && $isLikert)
+                                <div class="rsx-opts">
+                                    @foreach(\App\Models\Question::LIKERT_OPTIONS as $opt => $optText)
+                                        @php
+                                            $isPick = (string) $selected === (string) $opt;
+                                            $state = $isPick ? 'picked_key' : 'default';
+                                        @endphp
+                                        <div class="rsx-opt {{ $isPick ? 'rsx-opt-picked-key' : '' }}">
+                                            <div class="rsx-opt-letter">{{ $opt }}</div>
+                                            <div class="rsx-opt-text">{{ $optText }}</div>
+                                            <div class="rsx-opt-badges">
+                                                @if($isPick)
+                                                    <span class="rsx-opt-badge rsx-opt-badge-ok">
+                                                        <i class="fas fa-check"></i>
+                                                        Kamu
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @elseif($q)
                                 <div class="rsx-opts">
                                     @foreach(['A','B','C','D'] as $opt)
                                         @php

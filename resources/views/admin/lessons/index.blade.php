@@ -443,7 +443,7 @@
                                     data-title="{{ $lesson->title }}" 
                                     data-order="{{ $lesson->order_number }}" 
                                     data-video="{{ $lesson->video_url }}" 
-                                    data-content="{{ $lesson->content }}"
+                                    data-content="{{ e(json_encode($lesson->content ?? '')) }}"
                                     class="cp-action-btn cp-btn-edit">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -485,7 +485,7 @@
                         data-title="{{ $lesson->title }}" 
                         data-order="{{ $lesson->order_number }}" 
                         data-video="{{ $lesson->video_url }}" 
-                        data-content='@json($lesson->content)'
+                        data-content="{{ e(json_encode($lesson->content ?? '')) }}"
                         class="cp-btn cp-btn-back" style="flex:1; justify-content:center; padding:0.6rem; color:var(--c-teal);">
                     EDIT
                 </button>
@@ -750,29 +750,47 @@ function initLessonEditors() {
     if (editForm) editForm.addEventListener('submit', function () { window.tinymce?.triggerSave(); });
 }
 
+function parseLessonContent(raw) {
+    if (raw == null || raw === '') return '';
+    try {
+        const parsed = JSON.parse(raw);
+        return parsed == null ? '' : String(parsed);
+    } catch (e) {
+        return String(raw);
+    }
+}
+
+function setEditEditorContent(content) {
+    const editor = window.tinymce?.get('editContent');
+    if (editor) {
+        editor.setContent(content || '');
+        return true;
+    }
+    const ta = document.getElementById('editContent');
+    if (ta) ta.value = content || '';
+    return false;
+}
+
 function editLesson(btn) {
     const modal = document.getElementById('editModal');
     const form = document.getElementById('editForm');
-    
+    const content = parseLessonContent(btn.getAttribute('data-content'));
+
     form.action = `/admin/lessons/${btn.dataset.id}`;
-    document.getElementById('editTitle').value = btn.dataset.title;
-    document.getElementById('editOrderNumber').value = btn.dataset.order;
+    document.getElementById('editTitle').value = btn.dataset.title || '';
+    document.getElementById('editOrderNumber').value = btn.dataset.order || '';
     document.getElementById('editVideoUrl').value = (btn.dataset.video === 'Tidak ada video' || !btn.dataset.video || btn.dataset.video === 'null') ? '' : btn.dataset.video;
-    
+
     modal.classList.remove('hidden');
 
     initLessonEditors();
-    const editor = window.tinymce?.get('editContent');
-    if (editor) {
-        let content = '';
-        try {
-            content = JSON.parse(btn.dataset.content || '""') || '';
-        } catch (e) {
-            content = btn.dataset.content || '';
-        }
-        editor.setContent(content);
-    } else {
-        document.getElementById('editContent').value = btn.dataset.content;
+
+    if (!setEditEditorContent(content)) {
+        let tries = 0;
+        const timer = setInterval(function () {
+            tries += 1;
+            if (setEditEditorContent(content) || tries > 50) clearInterval(timer);
+        }, 50);
     }
 }
 

@@ -784,6 +784,7 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                 <tr>
                     <th class="sp-th" style="width:56px">No.</th>
                     <th class="sp-th">Pertanyaan</th>
+                    <th class="sp-th">Jenis</th>
                     <th class="sp-th">Jawaban Benar</th>
                     <th class="sp-th" style="text-align:right">Tindakan</th>
                 </tr>
@@ -804,16 +805,38 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                         </div>
                     </td>
                     <td class="sp-td">
-                        <span class="sp-correct-answer-chip">
-                            <i class="fas fa-check"></i>
-                            Opsi {{ $question->correct_answer }}
-                        </span>
+                        @if(($question->format ?? 'multiple_choice') === 'likert')
+                            <span class="sp-correct-answer-chip" style="background:#EEF2FF;color:#3730A3;">
+                                <i class="fas fa-sliders-h"></i>
+                                Likert
+                            </span>
+                        @else
+                            <span class="sp-correct-answer-chip" style="background:#ECFDF5;color:#047857;">
+                                <i class="fas fa-list-ul"></i>
+                                PG
+                            </span>
+                        @endif
+                    </td>
+                    <td class="sp-td">
+                        @if(($question->format ?? 'multiple_choice') === 'likert')
+                            <span class="sp-correct-answer-chip">
+                                <i class="fas fa-exchange-alt"></i>
+                                {{ ($question->polarity ?? 'positive') === 'negative' ? 'Negatif' : 'Positif' }}
+                            </span>
+                        @else
+                            <span class="sp-correct-answer-chip">
+                                <i class="fas fa-check"></i>
+                                Opsi {{ $question->correct_answer }}
+                            </span>
+                        @endif
                     </td>
                     <td class="sp-td sp-td-actions">
                         <div class="sp-actions-group">
                             <button onclick="editQuestion(this)"
                                     data-id="{{ $question->id }}"
                                     data-question="{{ $question->question }}"
+                                    data-format="{{ $question->format ?? 'multiple_choice' }}"
+                                    data-polarity="{{ $question->polarity ?? 'positive' }}"
                                     data-option_a="{{ $question->option_a }}"
                                     data-option_b="{{ $question->option_b }}"
                                     data-option_c="{{ $question->option_c }}"
@@ -837,7 +860,7 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="sp-empty">
+                    <td colspan="5" class="sp-empty">
                         <div class="sp-empty-icon"><i class="fas fa-question-circle"></i></div>
                         <div class="sp-empty-text">Belum ada data pertanyaan yang tercatat.</div>
                     </td>
@@ -857,8 +880,13 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                 <div class="sp-card-info">
                     <div class="sp-card-question">{{ $question->question }}</div>
                     <div class="sp-card-answer">
-                        <i class="fas fa-check-circle"></i>
-                        Jawaban: {{ $question->correct_answer }}
+                        @if(($question->format ?? 'multiple_choice') === 'likert')
+                            <i class="fas fa-sliders-h"></i>
+                            Likert · {{ ($question->polarity ?? 'positive') === 'negative' ? 'Negatif' : 'Positif' }}
+                        @else
+                            <i class="fas fa-check-circle"></i>
+                            Jawaban: {{ $question->correct_answer }}
+                        @endif
                     </div>
                 </div>
             </div>
@@ -874,6 +902,8 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                     <button onclick="editQuestion(this)"
                             data-id="{{ $question->id }}"
                             data-question="{{ $question->question }}"
+                            data-format="{{ $question->format ?? 'multiple_choice' }}"
+                            data-polarity="{{ $question->polarity ?? 'positive' }}"
                             data-option_a="{{ $question->option_a }}"
                             data-option_b="{{ $question->option_b }}"
                             data-option_c="{{ $question->option_c }}"
@@ -930,33 +960,46 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                     </div>
                 </div>
 
+                <div class="sp-field">
+                    <label class="sp-label">Jenis Soal</label>
+                    <div class="sp-input-wrap sp-select-wrap">
+                        <i class="fas fa-layer-group sp-input-icon"></i>
+                        <select name="format" id="addFormat" required class="sp-input" style="padding-right:2.4rem" onchange="toggleQuestionFormat('add')">
+                            <option value="multiple_choice">Pilihan Ganda</option>
+                            <option value="likert">Skala Likert (Sikap)</option>
+                        </select>
+                        <i class="fas fa-chevron-down sp-input-icon" style="left:auto;right:0.9rem;font-size:0.6rem"></i>
+                    </div>
+                </div>
+
+                <div id="addMcFields">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.1rem;">
                     <div class="sp-field">
                         <label class="sp-label">Opsi A</label>
                         <div class="sp-input-wrap">
                             <i class="fas fa-alpha-a sp-input-icon"></i>
-                            <input type="text" name="option_a" required class="sp-input" placeholder="Jawaban A">
+                            <input type="text" name="option_a" id="addOptionA" required class="sp-input" placeholder="Jawaban A">
                         </div>
                     </div>
                     <div class="sp-field">
                         <label class="sp-label">Opsi B</label>
                         <div class="sp-input-wrap">
                             <i class="fas fa-alpha-b sp-input-icon"></i>
-                            <input type="text" name="option_b" required class="sp-input" placeholder="Jawaban B">
+                            <input type="text" name="option_b" id="addOptionB" required class="sp-input" placeholder="Jawaban B">
                         </div>
                     </div>
                     <div class="sp-field">
                         <label class="sp-label">Opsi C</label>
                         <div class="sp-input-wrap">
                             <i class="fas fa-alpha-c sp-input-icon"></i>
-                            <input type="text" name="option_c" required class="sp-input" placeholder="Jawaban C">
+                            <input type="text" name="option_c" id="addOptionC" required class="sp-input" placeholder="Jawaban C">
                         </div>
                     </div>
                     <div class="sp-field">
                         <label class="sp-label">Opsi D</label>
                         <div class="sp-input-wrap">
                             <i class="fas fa-alpha-d sp-input-icon"></i>
-                            <input type="text" name="option_d" required class="sp-input" placeholder="Jawaban D">
+                            <input type="text" name="option_d" id="addOptionD" required class="sp-input" placeholder="Jawaban D">
                         </div>
                     </div>
                 </div>
@@ -965,7 +1008,7 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                     <label class="sp-label">Jawaban Benar</label>
                     <div class="sp-input-wrap sp-select-wrap">
                         <i class="fas fa-check-circle sp-input-icon"></i>
-                        <select name="correct_answer" required class="sp-input" style="padding-right:2.4rem">
+                        <select name="correct_answer" id="addCorrectAnswer" required class="sp-input" style="padding-right:2.4rem">
                             <option value="">Pilih Jawaban yang Benar</option>
                             <option value="A">Opsi A</option>
                             <option value="B">Opsi B</option>
@@ -973,6 +1016,24 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                             <option value="D">Opsi D</option>
                         </select>
                         <i class="fas fa-chevron-down sp-input-icon" style="left:auto;right:0.9rem;font-size:0.6rem"></i>
+                    </div>
+                </div>
+                </div>
+
+                <div id="addLikertFields" style="display:none;">
+                    <div class="sp-field">
+                        <label class="sp-label">Arah Penilaian (Polaritas)</label>
+                        <div class="sp-input-wrap sp-select-wrap">
+                            <i class="fas fa-exchange-alt sp-input-icon"></i>
+                            <select name="polarity" id="addPolarity" class="sp-input" style="padding-right:2.4rem">
+                                <option value="positive">Positif — Sangat Setuju = 5</option>
+                                <option value="negative">Negatif — Sangat Tidak Setuju = 5</option>
+                            </select>
+                            <i class="fas fa-chevron-down sp-input-icon" style="left:auto;right:0.9rem;font-size:0.6rem"></i>
+                        </div>
+                        <p style="margin:0.55rem 0 0;font-size:0.72rem;color:#64748b;line-height:1.5;">
+                            Opsi tetap: Sangat Setuju, Setuju, Netral, Tidak Setuju, Sangat Tidak Setuju (poin 5–1).
+                        </p>
                     </div>
                 </div>
             </form>
@@ -1015,6 +1076,19 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                     </div>
                 </div>
 
+                <div class="sp-field">
+                    <label class="sp-label">Jenis Soal</label>
+                    <div class="sp-input-wrap sp-select-wrap">
+                        <i class="fas fa-layer-group sp-input-icon"></i>
+                        <select name="format" id="editFormat" required class="sp-input" style="padding-right:2.4rem" onchange="toggleQuestionFormat('edit')">
+                            <option value="multiple_choice">Pilihan Ganda</option>
+                            <option value="likert">Skala Likert (Sikap)</option>
+                        </select>
+                        <i class="fas fa-chevron-down sp-input-icon" style="left:auto;right:0.9rem;font-size:0.6rem"></i>
+                    </div>
+                </div>
+
+                <div id="editMcFields">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.1rem;">
                     <div class="sp-field">
                         <label class="sp-label">Opsi A</label>
@@ -1060,6 +1134,21 @@ tr:hover .sp-question-text { color: var(--s-navy); }
                         <i class="fas fa-chevron-down sp-input-icon" style="left:auto;right:0.9rem;font-size:0.6rem"></i>
                     </div>
                 </div>
+                </div>
+
+                <div id="editLikertFields" style="display:none;">
+                    <div class="sp-field">
+                        <label class="sp-label">Arah Penilaian (Polaritas)</label>
+                        <div class="sp-input-wrap sp-select-wrap">
+                            <i class="fas fa-exchange-alt sp-input-icon"></i>
+                            <select name="polarity" id="editPolarity" class="sp-input" style="padding-right:2.4rem">
+                                <option value="positive">Positif — Sangat Setuju = 5</option>
+                                <option value="negative">Negatif — Sangat Tidak Setuju = 5</option>
+                            </select>
+                            <i class="fas fa-chevron-down sp-input-icon" style="left:auto;right:0.9rem;font-size:0.6rem"></i>
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
 
@@ -1079,8 +1168,30 @@ tr:hover .sp-question-text { color: var(--s-navy); }
 const addModal = document.getElementById('addModal');
 const editModal = document.getElementById('editModal');
 
+function toggleQuestionFormat(scope) {
+    const formatEl = document.getElementById(scope + 'Format');
+    const isLikert = formatEl && formatEl.value === 'likert';
+    const mc = document.getElementById(scope + 'McFields');
+    const likert = document.getElementById(scope + 'LikertFields');
+    if (mc) mc.style.display = isLikert ? 'none' : '';
+    if (likert) likert.style.display = isLikert ? '' : 'none';
+
+    ['OptionA','OptionB','OptionC','OptionD','CorrectAnswer'].forEach((suffix) => {
+        const el = document.getElementById(scope + suffix);
+        if (!el) return;
+        el.required = !isLikert;
+        if (isLikert) el.removeAttribute('required');
+    });
+
+    const polarity = document.getElementById(scope + 'Polarity');
+    if (polarity) polarity.required = isLikert;
+}
+
 function openAddModal() {
     addModal.classList.remove('hidden');
+    const format = document.getElementById('addFormat');
+    if (format) format.value = 'multiple_choice';
+    toggleQuestionFormat('add');
     setTimeout(() => addModal.classList.add('sp-open'), 10);
 }
 function closeAddModal() {
@@ -1103,11 +1214,14 @@ function editQuestion(button) {
 
     form.action = `{{ url('admin/pre-questions') }}/${data.id}`;
     document.getElementById('editQuestion').value = data.question;
-    document.getElementById('editOptionA').value = data.option_a;
-    document.getElementById('editOptionB').value = data.option_b;
-    document.getElementById('editOptionC').value = data.option_c;
-    document.getElementById('editOptionD').value = data.option_d;
-    document.getElementById('editCorrectAnswer').value = data.correct_answer;
+    document.getElementById('editFormat').value = data.format || 'multiple_choice';
+    document.getElementById('editPolarity').value = data.polarity || 'positive';
+    document.getElementById('editOptionA').value = data.option_a || '';
+    document.getElementById('editOptionB').value = data.option_b || '';
+    document.getElementById('editOptionC').value = data.option_c || '';
+    document.getElementById('editOptionD').value = data.option_d || '';
+    document.getElementById('editCorrectAnswer').value = data.correct_answer || '';
+    toggleQuestionFormat('edit');
 
     openEditModal();
 }

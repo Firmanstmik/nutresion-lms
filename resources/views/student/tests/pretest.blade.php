@@ -85,43 +85,134 @@
         @csrf
         <input type="hidden" name="is_timeout" id="pt-is-timeout" value="0">
 
-        @foreach($course->preQuestions as $question)
-        <div class="pt-question-card" style="--qi: {{ $loop->index }}">
-            <div class="pt-q-header">
-                <div class="pt-q-num">{{ $loop->iteration }}</div>
-                <h3 class="pt-q-text">{{ $question->question }}</h3>
-            </div>
+        @php
+            $mcQuestions = $mcQuestions ?? $course->preQuestions->filter->isMultipleChoice()->values();
+            $likertQuestions = $likertQuestions ?? $course->preQuestions->filter->isLikert()->values();
+            $hasMc = $mcQuestions->count() > 0;
+            $hasLikert = $likertQuestions->count() > 0;
+        @endphp
 
-            <div class="pt-options">
-                @foreach(['A','B','C','D'] as $opt)
-                <label class="pt-option">
-                    <input
-                        type="radio"
-                        name="question_{{ $question->id }}"
-                        value="{{ $opt }}"
-                        class="pt-radio"
-                    >
-                    <div class="pt-option-inner">
-                        <span class="pt-opt-letter">{{ $opt }}</span>
-                        <span class="pt-opt-text">{{ $question->{'option_' . strtolower($opt)} }}</span>
-                        <span class="pt-opt-check"><i class="fas fa-check"></i></span>
+        <div id="pt-section-mc" class="pt-section" @if(!$hasMc && $hasLikert) style="display:none" @endif>
+            @if($hasMc)
+                <div class="pt-section-banner">
+                    <span class="pt-section-chip">Bag 1</span>
+                    <div>
+                        <div class="pt-section-title">Soal Pilihan Ganda</div>
+                        <div class="pt-section-sub">{{ $mcQuestions->count() }} soal pengetahuan</div>
                     </div>
-                </label>
-                @endforeach
+                </div>
+            @endif
+
+            @foreach($mcQuestions as $question)
+            <div class="pt-question-card" style="--qi: {{ $loop->index }}" data-section="mc">
+                <div class="pt-q-header">
+                    <div class="pt-q-num">{{ $loop->iteration }}</div>
+                    <h3 class="pt-q-text">{{ $question->question }}</h3>
+                </div>
+
+                <div class="pt-options">
+                    @foreach(['A','B','C','D'] as $opt)
+                    <label class="pt-option">
+                        <input
+                            type="radio"
+                            name="question_{{ $question->id }}"
+                            value="{{ $opt }}"
+                            class="pt-radio"
+                            data-section="mc"
+                        >
+                        <div class="pt-option-inner">
+                            <span class="pt-opt-letter">{{ $opt }}</span>
+                            <span class="pt-opt-text">{{ $question->{'option_' . strtolower($opt)} }}</span>
+                            <span class="pt-opt-check"><i class="fas fa-check"></i></span>
+                        </div>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+            @endforeach
+
+            <div class="pt-submit-bar">
+                <div class="pt-submit-note">
+                    <i class="fas fa-info-circle"></i>
+                    @if($hasLikert)
+                        Selesai pilihan ganda? Lanjut ke pertanyaan sikap.
+                    @else
+                        Periksa kembali jawaban sebelum mengirim. Waktu habis = otomatis dikumpulkan.
+                    @endif
+                </div>
+                @if($hasLikert)
+                    <button type="button" class="pt-submit-btn" id="pt-next-btn">
+                        Berikutnya
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                @else
+                    <button type="submit" class="pt-submit-btn" id="pt-submit-btn">
+                        <i class="fas fa-paper-plane"></i>
+                        SELESAIKAN PRE TEST
+                    </button>
+                @endif
             </div>
         </div>
-        @endforeach
 
-        {{-- ── Submit Bar ──────────────────────────────────────────────────── --}}
-        <div class="pt-submit-bar">
-            <div class="pt-submit-note">
-                <i class="fas fa-info-circle"></i>
-                Periksa kembali jawaban sebelum mengirim. Waktu habis = otomatis dikumpulkan.
+        <div id="pt-section-likert" class="pt-section" @if($hasMc || !$hasLikert) style="display:none" @endif>
+            @if($hasLikert)
+                <div class="pt-section-banner">
+                    <span class="pt-section-chip">Bag 2</span>
+                    <div>
+                        <div class="pt-section-title">Pertanyaan Sikap</div>
+                        <div class="pt-section-sub">Skala Likert · {{ $likertQuestions->count() }} pernyataan</div>
+                    </div>
+                </div>
+            @endif
+
+            @foreach($likertQuestions as $question)
+            <div class="pt-question-card" style="--qi: {{ $loop->index }}" data-section="likert">
+                <div class="pt-q-header">
+                    <div class="pt-q-num">{{ $loop->iteration }}</div>
+                    <h3 class="pt-q-text">{{ $question->question }}</h3>
+                </div>
+
+                <div class="pt-options pt-likert-options">
+                    @foreach(\App\Models\Question::LIKERT_OPTIONS as $value => $label)
+                    <label class="pt-option">
+                        <input
+                            type="radio"
+                            name="question_{{ $question->id }}"
+                            value="{{ $value }}"
+                            class="pt-radio"
+                            data-section="likert"
+                        >
+                        <div class="pt-option-inner">
+                            <span class="pt-opt-letter">{{ $value }}</span>
+                            <span class="pt-opt-text">{{ $label }}</span>
+                            <span class="pt-opt-check"><i class="fas fa-check"></i></span>
+                        </div>
+                    </label>
+                    @endforeach
+                </div>
             </div>
-            <button type="submit" class="pt-submit-btn" id="pt-submit-btn">
-                <i class="fas fa-paper-plane"></i>
-                SELESAIKAN PRE TEST
-            </button>
+            @endforeach
+
+            @if($hasLikert)
+            <div class="pt-submit-bar">
+                <div class="pt-submit-note">
+                    <i class="fas fa-info-circle"></i>
+                    Pilih tingkat persetujuanmu. Poin 5–1 dihitung otomatis.
+                </div>
+                <div class="pt-submit-actions">
+                    @if($hasMc)
+                        <button type="button" class="pt-back-btn" id="pt-back-btn">
+                            <i class="fas fa-arrow-left"></i>
+                            Kembali
+                        </button>
+                    @endif
+                    <button type="submit" class="pt-submit-btn" id="pt-submit-btn">
+                        <i class="fas fa-paper-plane"></i>
+                        SELESAIKAN PRE TEST
+                    </button>
+                </div>
+            </div>
+            @endif
         </div>
 
     </form>
@@ -471,6 +562,35 @@
 }
 .pt-submit-btn:active { transform: scale(0.97); }
 
+.pt-section-banner {
+    display: flex; align-items: center; gap: 0.85rem;
+    margin: 0 0 1rem; padding: 0.9rem 1rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(13,92,52,0.08), rgba(24,121,69,0.04));
+    border: 1px solid rgba(13,92,52,0.12);
+}
+.pt-section-chip {
+    flex-shrink: 0;
+    padding: 0.35rem 0.65rem; border-radius: 999px;
+    background: #0D5C34; color: #fff;
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.pt-section-title { font-size: 0.95rem; font-weight: 800; color: #0B1E3F; }
+.pt-section-sub { font-size: 0.72rem; font-weight: 600; color: var(--pt-muted); margin-top: 0.15rem; }
+.pt-submit-actions { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; justify-content: flex-end; }
+.pt-back-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.8rem 1.25rem; border-radius: 12px;
+    border: 1px solid var(--pt-border); background: #fff;
+    color: #0B1E3F; font-size: 0.68rem; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+}
+.pt-likert-options .pt-opt-letter {
+    min-width: 1.75rem; height: 1.75rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 999px; font-size: 0.7rem;
+}
+
 /* ── Timeout Modal ───────────────────────────────────────────── */
 .pt-modal {
     position: fixed; inset: 0; z-index: 99999;
@@ -666,6 +786,39 @@
     formEl.addEventListener('change', function () {
         updateUI();
     });
+
+    const mcSection = document.getElementById('pt-section-mc');
+    const likertSection = document.getElementById('pt-section-likert');
+    const nextBtn = document.getElementById('pt-next-btn');
+    const backBtn = document.getElementById('pt-back-btn');
+    const mcCount = formEl.querySelectorAll('.pt-question-card[data-section="mc"]').length;
+
+    function showLikertSection() {
+        if (mcSection) mcSection.style.display = 'none';
+        if (likertSection) likertSection.style.display = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showMcSection() {
+        if (likertSection) likertSection.style.display = 'none';
+        if (mcSection) mcSection.style.display = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+            const answeredMc = formEl.querySelectorAll('input[data-section="mc"]:checked').length;
+            if (mcCount > 0 && answeredMc < mcCount) {
+                if (!confirm('Masih ada soal pilihan ganda yang belum dijawab. Lanjut ke pertanyaan sikap?')) {
+                    return;
+                }
+            }
+            showLikertSection();
+        });
+    }
+    if (backBtn) {
+        backBtn.addEventListener('click', showMcSection);
+    }
 })();
 </script>
 

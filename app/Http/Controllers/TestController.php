@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\Result;
 use App\Models\ResultAnswer;
 use App\Models\UserProgress;
+use App\Services\TestScoringService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -18,12 +19,10 @@ class TestController extends Controller
         $course = Course::with(['lessons', 'postQuestions'])->findOrFail($course_id);
         $user_id = Auth::id();
 
-        // Check if there are any post-test questions
         if ($course->postQuestions->count() === 0) {
             return redirect()->route('courses.detail', $course_id)->with('error', 'Belum ada soal Post Test untuk kursus ini.');
         }
 
-        // Check if all lessons are completed
         $progress = UserProgress::where('user_id', $user_id)
             ->whereIn('lesson_id', $course->lessons->pluck('id'))
             ->where('is_completed', true)
@@ -33,77 +32,68 @@ class TestController extends Controller
             return redirect()->route('courses.detail', $course_id)->with('error', 'Selesaikan semua bab sebelum Post Test.');
         }
 
-        // Check if test already taken
         $existing_result = Result::where('user_id', $user_id)->where('course_id', $course_id)->where('type', 'post')->first();
         if ($existing_result) {
             return view('student.tests.completed', compact('course', 'existing_result'));
         }
 
+        $mcQuestions = $course->postQuestions->filter->isMultipleChoice()->values();
+        $likertQuestions = $course->postQuestions->filter->isLikert()->values();
         $question_count = $course->postQuestions->count();
         $duration_minutes = max(1, $question_count);
         $duration_seconds = $duration_minutes * 60;
 
-        return view('student.tests.index', compact('course', 'duration_seconds', 'duration_minutes', 'question_count'));
+        return view('student.tests.index', compact(
+            'course',
+            'mcQuestions',
+            'likertQuestions',
+            'duration_seconds',
+            'duration_minutes',
+            'question_count'
+        ));
     }
 
-    public function submit(Request $request, int $course_id)
+    public function submit(Request $request, int $course_id, TestScoringService $scoring)
     {
         $course = Course::with('postQuestions')->findOrFail($course_id);
         $user_id = Auth::id();
 
-        // Check if test already taken
         if (Result::where('user_id', $user_id)->where('course_id', $course_id)->where('type', 'post')->exists()) {
             return redirect()->route('courses.detail', $course_id)->with('error', 'Anda sudah mengambil test ini.');
         }
 
-        $questions = $course->postQuestions;
-        $total_questions = $questions->count();
+        $graded = $scoring->grade($course->postQuestions, $request);
 
-        $correct_count = 0;
-        $answer_rows = [];
-        $now = now();
-
-        foreach ($questions as $question) {
-            $answer_key = 'question_'.$question->id;
-            $selected = $request->input($answer_key);
-            $is_correct = $selected !== null && $selected === $question->correct_answer;
-            if ($is_correct) {
-                $correct_count++;
-            }
-            $answer_rows[] = [
-                'question_id' => $question->id,
-                'selected_answer' => $selected,
-                'is_correct' => $is_correct,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-        }
-
-        $final_score = $total_questions > 0 ? ($correct_count / $total_questions) * 100 : 0;
-        $rounded_score = round($final_score);
-
-        $result = Result::create([
+        $resultData = [
             'user_id' => $user_id,
             'course_id' => $course_id,
-            'score' => $rounded_score,
+            'score' => $graded['score'],
             'type' => 'post',
-        ]);
+        ];
 
-        if (count($answer_rows) > 0) {
-            foreach ($answer_rows as &$row) {
-                $row['result_id'] = $result->id;
-            }
-            unset($row);
-            if (Schema::hasTable('result_answers')) {
-                ResultAnswer::insert($answer_rows);
-            }
+        if (Schema::hasColumn('results', 'mc_score')) {
+            $resultData['mc_score'] = $graded['mc_score'];
+            $resultData['likert_score'] = $graded['likert_score'];
         }
 
-        // Create Notification for Result
+        $result = Result::create($resultData);
+
+        if (count($graded['answer_rows']) > 0 && Schema::hasTable('result_answers')) {
+            $rows = $graded['answer_rows'];
+            foreach ($rows as &$row) {
+                $row['result_id'] = $result->id;
+                if (! Schema::hasColumn('result_answers', 'points')) {
+                    unset($row['points']);
+                }
+            }
+            unset($row);
+            ResultAnswer::insert($rows);
+        }
+
         Notification::create([
             'user_id' => $user_id,
             'title' => 'Post Test Selesai: '.$course->title,
-            'message' => 'Selamat! Kamu telah menyelesaikan Post Test untuk '.$course->title.' dengan nilai '.$rounded_score.'. Klik di sini untuk melihat detail hasil belajarmu.',
+            'message' => 'Selamat! Kamu telah menyelesaikan Post Test untuk '.$course->title.' dengan nilai '.$graded['score'].'. Klik di sini untuk melihat detail hasil belajarmu.',
             'type' => 'result',
             'action_url' => route('results.show', $result->id),
             'is_read' => false,
@@ -136,7 +126,6 @@ class TestController extends Controller
         $allResults = Result::where('user_id', $user_id)->with('course')->get();
         $preResults = $allResults->where('type', 'pre')->values();
         $postResults = $allResults->where('type', 'post')->values();
-        // Keep $results for backward compatibility
         $results = $postResults;
 
         return view('student.results.index', compact('results', 'preResults', 'postResults'));

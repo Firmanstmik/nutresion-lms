@@ -77,8 +77,26 @@
         @csrf
         <input type="hidden" name="is_timeout" id="pst-is-timeout" value="0">
 
-        @foreach($course->postQuestions as $question)
-            <div class="pst-question-card" style="--qi: {{ $loop->index }}">
+        @php
+            $mcQuestions = $mcQuestions ?? $course->postQuestions->filter->isMultipleChoice()->values();
+            $likertQuestions = $likertQuestions ?? $course->postQuestions->filter->isLikert()->values();
+            $hasMc = $mcQuestions->count() > 0;
+            $hasLikert = $likertQuestions->count() > 0;
+        @endphp
+
+        <div id="pst-section-mc" class="pst-section" @if(!$hasMc && $hasLikert) style="display:none" @endif>
+            @if($hasMc)
+                <div class="pst-section-banner">
+                    <span class="pst-section-chip">Bag 1</span>
+                    <div>
+                        <div class="pst-section-title">Soal Pilihan Ganda</div>
+                        <div class="pst-section-sub">{{ $mcQuestions->count() }} soal pengetahuan</div>
+                    </div>
+                </div>
+            @endif
+
+            @foreach($mcQuestions as $question)
+            <div class="pst-question-card" style="--qi: {{ $loop->index }}" data-section="mc">
                 <div class="pst-q-header">
                     <div class="pst-q-num">{{ $loop->iteration }}</div>
                     <h3 class="pst-q-text">{{ $question->question }}</h3>
@@ -86,33 +104,107 @@
 
                 <div class="pst-options">
                     @foreach(['A','B','C','D'] as $opt)
-                        <label class="pst-option">
-                            <input
-                                type="radio"
-                                name="question_{{ $question->id }}"
-                                value="{{ $opt }}"
-                                class="pst-radio"
-                            >
-                            <div class="pst-option-inner">
-                                <span class="pst-opt-letter">{{ $opt }}</span>
-                                <span class="pst-opt-text">{{ $question->{'option_' . strtolower($opt)} }}</span>
-                                <span class="pst-opt-check"><i class="fas fa-check"></i></span>
-                            </div>
-                        </label>
+                    <label class="pst-option">
+                        <input
+                            type="radio"
+                            name="question_{{ $question->id }}"
+                            value="{{ $opt }}"
+                            class="pst-radio"
+                            data-section="mc"
+                        >
+                        <div class="pst-option-inner">
+                            <span class="pst-opt-letter">{{ $opt }}</span>
+                            <span class="pst-opt-text">{{ $question->{'option_' . strtolower($opt)} }}</span>
+                            <span class="pst-opt-check"><i class="fas fa-check"></i></span>
+                        </div>
+                    </label>
                     @endforeach
                 </div>
             </div>
-        @endforeach
+            @endforeach
 
-        <div class="pst-submit-bar">
-            <div class="pst-submit-note">
-                <i class="fas fa-info-circle"></i>
-                Waktu habis = otomatis dikumpulkan. Jawaban yang belum diisi dianggap salah.
+            <div class="pst-submit-bar">
+                <div class="pst-submit-note">
+                    <i class="fas fa-info-circle"></i>
+                    @if($hasLikert)
+                        Selesai pilihan ganda? Lanjut ke pertanyaan sikap.
+                    @else
+                        Waktu habis = otomatis dikumpulkan. Jawaban yang belum diisi dianggap salah.
+                    @endif
+                </div>
+                @if($hasLikert)
+                    <button type="button" class="pst-submit-btn" id="pst-next-btn">
+                        Berikutnya
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                @else
+                    <button type="submit" class="pst-submit-btn" id="pst-submit-btn">
+                        <i class="fas fa-paper-plane"></i>
+                        SELESAIKAN POST TEST
+                    </button>
+                @endif
             </div>
-            <button type="submit" class="pst-submit-btn" id="pst-submit-btn">
-                <i class="fas fa-paper-plane"></i>
-                SELESAIKAN POST TEST
-            </button>
+        </div>
+
+        <div id="pst-section-likert" class="pst-section" @if($hasMc || !$hasLikert) style="display:none" @endif>
+            @if($hasLikert)
+                <div class="pst-section-banner">
+                    <span class="pst-section-chip">Bag 2</span>
+                    <div>
+                        <div class="pst-section-title">Pertanyaan Sikap</div>
+                        <div class="pst-section-sub">Skala Likert · {{ $likertQuestions->count() }} pernyataan</div>
+                    </div>
+                </div>
+            @endif
+
+            @foreach($likertQuestions as $question)
+            <div class="pst-question-card" style="--qi: {{ $loop->index }}" data-section="likert">
+                <div class="pst-q-header">
+                    <div class="pst-q-num">{{ $loop->iteration }}</div>
+                    <h3 class="pst-q-text">{{ $question->question }}</h3>
+                </div>
+
+                <div class="pst-options pst-likert-options">
+                    @foreach(\App\Models\Question::LIKERT_OPTIONS as $value => $label)
+                    <label class="pst-option">
+                        <input
+                            type="radio"
+                            name="question_{{ $question->id }}"
+                            value="{{ $value }}"
+                            class="pst-radio"
+                            data-section="likert"
+                        >
+                        <div class="pst-option-inner">
+                            <span class="pst-opt-letter">{{ $value }}</span>
+                            <span class="pst-opt-text">{{ $label }}</span>
+                            <span class="pst-opt-check"><i class="fas fa-check"></i></span>
+                        </div>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+            @endforeach
+
+            @if($hasLikert)
+            <div class="pst-submit-bar">
+                <div class="pst-submit-note">
+                    <i class="fas fa-info-circle"></i>
+                    Pilih tingkat persetujuanmu. Poin 5–1 dihitung otomatis.
+                </div>
+                <div class="pst-submit-actions">
+                    @if($hasMc)
+                        <button type="button" class="pst-back-btn" id="pst-back-btn">
+                            <i class="fas fa-arrow-left"></i>
+                            Kembali
+                        </button>
+                    @endif
+                    <button type="submit" class="pst-submit-btn" id="pst-submit-btn">
+                        <i class="fas fa-paper-plane"></i>
+                        SELESAIKAN POST TEST
+                    </button>
+                </div>
+            </div>
+            @endif
         </div>
     </form>
 </div>
@@ -413,6 +505,35 @@
 }
 .pst-submit-btn:active { transform: scale(0.97); }
 
+.pst-section-banner {
+    display: flex; align-items: center; gap: 0.85rem;
+    margin: 0 0 1rem; padding: 0.9rem 1rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(15,126,110,0.10), rgba(11,30,63,0.04));
+    border: 1px solid rgba(15,126,110,0.14);
+}
+.pst-section-chip {
+    flex-shrink: 0;
+    padding: 0.35rem 0.65rem; border-radius: 999px;
+    background: var(--pst-navy); color: #fff;
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.pst-section-title { font-size: 0.95rem; font-weight: 800; color: #0B1E3F; }
+.pst-section-sub { font-size: 0.72rem; font-weight: 600; color: var(--pst-muted); margin-top: 0.15rem; }
+.pst-submit-actions { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; justify-content: flex-end; }
+.pst-back-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.8rem 1.25rem; border-radius: 12px;
+    border: 1px solid var(--pst-border); background: #fff;
+    color: #0B1E3F; font-size: 0.68rem; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+}
+.pst-likert-options .pst-opt-letter {
+    min-width: 1.75rem; height: 1.75rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 999px; font-size: 0.7rem;
+}
+
 .pst-modal {
     position: fixed; inset: 0; z-index: 99999;
     background: rgba(0,0,0,0.65);
@@ -587,6 +708,39 @@
     formEl.addEventListener('change', function () {
         updateUI();
     });
+
+    const mcSection = document.getElementById('pst-section-mc');
+    const likertSection = document.getElementById('pst-section-likert');
+    const nextBtn = document.getElementById('pst-next-btn');
+    const backBtn = document.getElementById('pst-back-btn');
+    const mcCount = formEl.querySelectorAll('.pst-question-card[data-section="mc"]').length;
+
+    function showLikertSection() {
+        if (mcSection) mcSection.style.display = 'none';
+        if (likertSection) likertSection.style.display = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showMcSection() {
+        if (likertSection) likertSection.style.display = 'none';
+        if (mcSection) mcSection.style.display = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+            const answeredMc = formEl.querySelectorAll('input[data-section="mc"]:checked').length;
+            if (mcCount > 0 && answeredMc < mcCount) {
+                if (!confirm('Masih ada soal pilihan ganda yang belum dijawab. Lanjut ke pertanyaan sikap?')) {
+                    return;
+                }
+            }
+            showLikertSection();
+        });
+    }
+    if (backBtn) {
+        backBtn.addEventListener('click', showMcSection);
+    }
 })();
 </script>
 @endsection

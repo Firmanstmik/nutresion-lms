@@ -11,10 +11,12 @@ class ResultAnswer extends Model
         'question_id',
         'selected_answer',
         'is_correct',
+        'points',
     ];
 
     protected $casts = [
         'is_correct' => 'boolean',
+        'points' => 'integer',
     ];
 
     public function result()

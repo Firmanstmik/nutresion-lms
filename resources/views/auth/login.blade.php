@@ -463,7 +463,7 @@
                         <span class="hl">Mudah & Seru</span>
                     </h2>
                     <p class="lp-desc">
-                        Tempat asik buat kamu belajar gizi, cek kesehatan harian, dan ikut berkontribusi dalam riset kesehatan bareng kakak-kakak Poltekkes Kemenkes.
+                        Tempat asik buat kamu belajar pentingnya nutrisi, pola makan sehat, dan gaya hidup aktif dengan cara yang seru dan interaktif bareng kakak Poltekkes Mataram.
                     </p>
                 </div>
                 <div class="lp-mid-logo">
@@ -487,7 +487,7 @@
                     <div class="lp-feat-icon">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                     </div>
-                    <span class="lp-feat-text"><strong>Bantu Riset</strong> bareng kakak Poltekkes NTB</span>
+                    <span class="lp-feat-text"><strong>Bantu Riset</strong> bareng kakak Poltekkes Mataram</span>
                 </div>
             </div>
         </div>
@@ -500,11 +500,11 @@
                     </div>
                     <span class="lp-card-label">Program Sehat Sekolah</span>
                 </div>
-                <p class="lp-card-desc">Program keren kolaborasi Poltekkes Kemenkes untuk dukung pola hidup sehat kamu di sekolah.</p>
+                <p class="lp-card-desc">Program keren kolaborasi Poltekkes Mataram untuk dukung pola hidup sehat kamu di sekolah.</p>
                 <div class="lp-card-tags">
                     <span class="lp-tag">
                         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        Poltekkes Kemenkes
+                        Poltekkes Mataram
                     </span>
                     <span class="lp-tag">
                         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
@@ -530,7 +530,7 @@
                     <div class="m-hero-text-wrap">
                         <div class="m-pill">Halo, Sahabat Gizi!</div>
                         <h1 class="m-title">Pantau Gizi Jadi<br>Lebih <span class="hl">Mudah & Seru</span></h1>
-                        <p class="m-desc">Tempat asik buat kamu belajar gizi & cek kesehatan harian bareng kakak Poltekkes NTB.</p>
+                        <p class="m-desc">Tempat asik buat kamu belajar pentingnya nutrisi, pola makan sehat, dan gaya hidup aktif dengan cara yang seru dan interaktif bareng kakak Poltekkes Mataram.</p>
                     </div>
                     <div class="m-hero-logo">
                         <img src="{{ route('brand.logo') }}" alt="Logo">
@@ -544,7 +544,7 @@
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
                     </div>
                     <div>
-                        <div class="m-badge-t">Poltekkes Kemenkes · Research Portal</div>
+                        <div class="m-badge-t">Poltekkes Mataram · Research Portal</div>
                         <div class="m-badge-s">Akses data riset & materi edukasi terakreditasi</div>
                     </div>
                 </div>
@@ -561,7 +561,7 @@
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
                 </div>
                 <div>
-                    <div class="nb-t">Poltekkes Kemenkes · Research Portal</div>
+                    <div class="nb-t">Poltekkes Mataram · Research Portal</div>
                     <div class="nb-s">Akses data riset & materi edukasi terakreditasi</div>
                 </div>
             </div>

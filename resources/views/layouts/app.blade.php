@@ -861,53 +861,66 @@
     $nextCourse = null;
     $studentNotifications = collect();
     $adminNotifications = collect();
+    $unreadCount = 0;
 
     if (Auth::check()) {
         if (Auth::user()->role === 'student') {
             $user_id = Auth::id();
 
-            // Proactive Check: Create "Post Test" notification if lessons completed but post-test not taken
-            $allCourses = \App\Models\Course::with('lessons')->get();
-            foreach ($allCourses as $c) {
-                $totalL = $c->lessons->count();
-                if ($totalL > 0) {
-                    $doneL = \App\Models\UserProgress::where('user_id', $user_id)
-                        ->whereIn('lesson_id', $c->lessons->pluck('id'))
-                        ->where('is_completed', true)
-                        ->count();
-                    
-                    $testDone = \App\Models\Result::where('user_id', $user_id)
-                        ->where('course_id', $c->id)
-                        ->first();
+            // Heavy post-test reminder check: once per session, not every page load
+            if (! session('posttest_notif_checked')) {
+                $courses = \App\Models\Course::query()
+                    ->with(['lessons:id,course_id,order_number'])
+                    ->select(['id', 'title'])
+                    ->get();
 
-                    if ($doneL === $totalL && !$testDone) {
+                $completedLessonIds = \App\Models\UserProgress::where('user_id', $user_id)
+                    ->where('is_completed', true)
+                    ->pluck('lesson_id')
+                    ->all();
+
+                $postResults = \App\Models\Result::where('user_id', $user_id)
+                    ->where('type', 'post')
+                    ->get(['id', 'course_id', 'score'])
+                    ->keyBy('course_id');
+
+                foreach ($courses as $c) {
+                    $lessonIds = $c->lessons->pluck('id')->all();
+                    $totalL = count($lessonIds);
+                    if ($totalL === 0) {
+                        continue;
+                    }
+
+                    $doneL = count(array_intersect($completedLessonIds, $lessonIds));
+                    $testDone = $postResults->get($c->id);
+
+                    if ($doneL === $totalL && ! $testDone) {
                         $targetUrl = route('tests.index', $c->id);
                         $existsNotif = \App\Models\Notification::where('user_id', $user_id)
                             ->where('action_url', $targetUrl)
                             ->exists();
 
-                        if (!$existsNotif) {
+                        if (! $existsNotif) {
                             \App\Models\Notification::create([
                                 'user_id' => $user_id,
-                                'title' => "Materi Tuntas: " . $c->title,
-                                'message' => "Selamat! Kamu telah menyelesaikan semua materi di " . $c->title . ". Ayo ambil Post Test sekarang untuk mendapatkan nilai!",
+                                'title' => 'Materi Tuntas: '.$c->title,
+                                'message' => 'Selamat! Kamu telah menyelesaikan semua materi di '.$c->title.'. Ayo ambil Post Test sekarang untuk mendapatkan nilai!',
                                 'type' => 'result',
                                 'action_url' => $targetUrl,
                                 'is_read' => false,
                             ]);
                         }
                     } elseif ($testDone) {
-                        // Also proactively check if "Result" notification exists
                         $resultUrl = route('results.show', $testDone->id);
                         $existsResultNotif = \App\Models\Notification::where('user_id', $user_id)
                             ->where('action_url', $resultUrl)
                             ->exists();
-                        
-                        if (!$existsResultNotif) {
+
+                        if (! $existsResultNotif) {
                             \App\Models\Notification::create([
                                 'user_id' => $user_id,
-                                'title' => "Post Test Selesai: " . $c->title,
-                                'message' => "Selamat! Kamu telah menyelesaikan Post Test untuk " . $c->title . " dengan nilai " . $testDone->score . ". Klik di sini untuk melihat detail hasil belajarmu.",
+                                'title' => 'Post Test Selesai: '.$c->title,
+                                'message' => 'Selamat! Kamu telah menyelesaikan Post Test untuk '.$c->title.' dengan nilai '.$testDone->score.'. Klik di sini untuk melihat detail hasil belajarmu.',
                                 'type' => 'result',
                                 'action_url' => $resultUrl,
                                 'is_read' => false,
@@ -915,20 +928,20 @@
                         }
                     }
                 }
+
+                session(['posttest_notif_checked' => true]);
             }
 
-            // Fetch real notifications after proactive creation
-             $studentNotifications = \App\Models\Notification::where('user_id', $user_id)
-                 ->latest()
-                 ->take(5)
-                 ->get();
-             
-             $unreadCount = \App\Models\Notification::where('user_id', $user_id)
-                 ->where('is_read', false)
-                 ->count();
+            $studentNotifications = \App\Models\Notification::where('user_id', $user_id)
+                ->latest()
+                ->take(5)
+                ->get();
 
-            // Learning recommendation logic
-            $latestProgress = \App\Models\UserProgress::where('user_id', Auth::id())
+            $unreadCount = \App\Models\Notification::where('user_id', $user_id)
+                ->where('is_read', false)
+                ->count();
+
+            $latestProgress = \App\Models\UserProgress::where('user_id', $user_id)
                 ->where('is_completed', true)
                 ->with('lesson.course.lessons')
                 ->latest('updated_at')
@@ -937,7 +950,7 @@
             if ($latestProgress && $latestProgress->lesson && $latestProgress->lesson->course) {
                 $nextCourse = $latestProgress->lesson->course;
                 $courseLessonIds = $nextCourse->lessons->pluck('id');
-                $completedLessonIds = \App\Models\UserProgress::where('user_id', Auth::id())
+                $completedLessonIds = \App\Models\UserProgress::where('user_id', $user_id)
                     ->where('is_completed', true)
                     ->whereIn('lesson_id', $courseLessonIds)
                     ->pluck('lesson_id')
@@ -945,12 +958,12 @@
 
                 $currentOrder = (int) $latestProgress->lesson->order_number;
                 $nextLesson = $nextCourse->lessons->first(function ($lesson) use ($completedLessonIds, $currentOrder) {
-                    return (int) $lesson->order_number > $currentOrder && !in_array($lesson->id, $completedLessonIds, true);
+                    return (int) $lesson->order_number > $currentOrder && ! in_array($lesson->id, $completedLessonIds, true);
                 });
 
-                if (!$nextLesson) {
+                if (! $nextLesson) {
                     $nextLesson = $nextCourse->lessons->first(function ($lesson) use ($completedLessonIds) {
-                        return !in_array($lesson->id, $completedLessonIds, true);
+                        return ! in_array($lesson->id, $completedLessonIds, true);
                     });
                 }
             }
@@ -959,8 +972,7 @@
                 ->latest()
                 ->take(5)
                 ->get();
-            
-            // For admin, let's say "unread" means notifications from today
+
             $unreadCount = \App\Models\Result::whereDate('created_at', \Carbon\Carbon::today())->count();
         }
     }
