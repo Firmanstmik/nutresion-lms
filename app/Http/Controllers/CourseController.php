@@ -83,6 +83,7 @@ class CourseController extends Controller
         $user_id = Auth::id();
         $progress = UserProgress::where('user_id', $user_id)
             ->whereIn('lesson_id', $course->lessons->pluck('id'))
+            ->where('is_completed', true)
             ->pluck('is_completed', 'lesson_id')
             ->toArray();
 

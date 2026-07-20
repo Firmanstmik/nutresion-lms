@@ -143,8 +143,8 @@
                         {{-- Action --}}
                         @if($is_completed)
                             <div class="nrd-done-badge">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Selesai</span>
+                                <i class="fas fa-lock"></i>
+                                <span>Terkunci</span>
                             </div>
                         @elseif($has_pre_test && !$pre_test_done)
                             <a href="{{ route('tests.pre.index', $lesson->course_id) }}" class="nrd-lock-btn" title="Kerjakan Pre Test terlebih dahulu">

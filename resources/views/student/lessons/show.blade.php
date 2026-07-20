@@ -21,13 +21,17 @@
                     <span class="hidden xs:inline sm:inline">Kembali</span>
                 </a>
 
-                <div class="flex items-center gap-3 min-w-0">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div id="nrlTimerChip" class="nrl-timer-chip" title="Sisa waktu belajar">
+                        <i class="fas fa-hourglass-half"></i>
+                        <span id="nrlTimerText">02:00</span>
+                    </div>
                     <div class="flex items-center gap-1.5 text-[10px] font-bold text-text-muted uppercase tracking-widest shrink-0">
                         <span>Bab {{ $lesson->order_number }}</span>
                         <span class="opacity-40">/</span>
                         <span>{{ $lessonTotalCount }}</span>
                     </div>
-                    <div class="w-24 sm:w-56 h-1.5 sm:h-2 rounded-full bg-white border border-border-subtle overflow-hidden">
+                    <div class="w-16 sm:w-56 h-1.5 sm:h-2 rounded-full bg-white border border-border-subtle overflow-hidden">
                         <div class="h-full bg-primary transition-all duration-700" @style(['width' => $lessonPct . '%'])></div>
                     </div>
                 </div>
@@ -180,26 +184,34 @@
                 <div class="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border-soft flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
                     <div class="flex items-center gap-3 p-3.5 sm:p-5 rounded-2xl bg-primary-soft/40 border border-border-subtle w-full sm:w-auto">
                         <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center text-white shadow-sm shrink-0">
-                            <i class="fas fa-lightbulb text-sm sm:text-base"></i>
+                            <i class="fas fa-clock text-sm sm:text-base"></i>
                         </div>
-                        <p class="text-xs sm:text-sm font-bold text-text-main leading-snug">Pastikan kamu sudah membaca seluruh materi dengan teliti.</p>
+                        <p class="text-xs sm:text-sm font-bold text-text-main leading-snug">
+                            Waktu belajar <span class="text-primary">2 menit</span>. Habis waktu = bab dikunci otomatis.
+                        </p>
                     </div>
 
-                    @if(!$is_completed)
-                    <form action="{{ route('lessons.complete', $lesson->id) }}" method="POST" class="w-full sm:w-auto">
+                    <form id="nrlCompleteForm" action="{{ route('lessons.complete', $lesson->id) }}" method="POST" class="w-full sm:w-auto">
                         @csrf
-                        <button type="submit" class="btn-primary w-full py-3.5 sm:py-4 px-8 sm:px-10 text-xs sm:text-sm uppercase tracking-widest font-extrabold flex items-center justify-center gap-3">
+                        <input type="hidden" name="is_timeout" id="nrlIsTimeout" value="0">
+                        <button type="submit" id="nrlCompleteBtn" class="btn-primary w-full py-3.5 sm:py-4 px-8 sm:px-10 text-xs sm:text-sm uppercase tracking-widest font-extrabold flex items-center justify-center gap-3">
                             Tandai Selesai <i class="fas fa-check-circle text-xs"></i>
                         </button>
                     </form>
-                    @else
-                    <div class="flex items-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 bg-green-50 text-green-700 font-extrabold rounded-2xl border border-green-100 shadow-inner w-full sm:w-auto justify-center">
-                        <i class="fas fa-check-double text-base sm:text-lg"></i>
-                        <span class="uppercase tracking-widest text-[11px] sm:text-xs">Materi Selesai</span>
-                    </div>
-                    @endif
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div id="nrlTimeoutModal" class="nrl-timeout-modal" style="display:none;" aria-hidden="true">
+    <div class="nrl-timeout-box">
+        <div class="nrl-timeout-icon"><i class="fas fa-hourglass-end"></i></div>
+        <h2 class="nrl-timeout-title">Waktu Habis</h2>
+        <p class="nrl-timeout-body">Durasi belajar 2 menit telah berakhir. Bab ini dikunci otomatis.</p>
+        <div class="nrl-timeout-spin">
+            <div class="nrl-spinner"></div>
+            <span>Mengunci bab...</span>
         </div>
     </div>
 </div>
@@ -207,15 +219,36 @@
 <style>
 .nrl-lesson-page {
     --nrl-ink: #1e293b;
-    --nrl-muted: #64748b;
+    --nrl-muted: #475569;
     --nrl-line: #e2e8f0;
     --nrl-soft: #f8fafc;
     --nrl-accent: #0f7e6e;
 }
 
-.nrl-lesson-card {
-    border-radius: 18px;
+.nrl-timer-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    background: #0f172a;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
+    flex-shrink: 0;
 }
+.nrl-timer-chip i { font-size: 0.65rem; opacity: 0.85; }
+.nrl-timer-chip.is-warn { background: #b45309; }
+.nrl-timer-chip.is-danger { background: #be123c; animation: nrlPulse 1s ease infinite; }
+@keyframes nrlPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+}
+
+.nrl-lesson-card { border-radius: 18px; }
 @media (max-width: 639px) {
     .nrl-lesson-card {
         border-radius: 14px;
@@ -226,121 +259,57 @@
 .nrl-lesson-content {
     color: var(--nrl-muted);
     font-size: 0.9375rem;
-    line-height: 1.7;
+    line-height: 1.75;
     font-weight: 500;
-    letter-spacing: -0.01em;
     overflow-wrap: anywhere;
     word-break: break-word;
 }
 @media (min-width: 640px) {
-    .nrl-lesson-content {
-        font-size: 1rem;
-        line-height: 1.75;
-    }
+    .nrl-lesson-content { font-size: 1rem; line-height: 1.8; }
 }
 
-/* Neutralize TinyMCE inline sizing / indent so mobile stays left-aligned */
-.nrl-lesson-content,
-.nrl-lesson-content * {
+.nrl-lesson-content img,
+.nrl-lesson-content video,
+.nrl-lesson-content iframe,
+.nrl-lesson-content table {
     max-width: 100%;
-}
-.nrl-lesson-content [style*="font-size"] {
-    font-size: inherit !important;
-}
-.nrl-lesson-content [style*="line-height"] {
-    line-height: inherit !important;
-}
-@media (max-width: 639px) {
-    .nrl-lesson-content p,
-    .nrl-lesson-content div,
-    .nrl-lesson-content h1,
-    .nrl-lesson-content h2,
-    .nrl-lesson-content h3,
-    .nrl-lesson-content h4,
-    .nrl-lesson-content li,
-    .nrl-lesson-content span {
-        margin-left: 0 !important;
-        text-indent: 0 !important;
-        text-align: left !important;
-    }
-    .nrl-lesson-content [style*="padding-left"],
-    .nrl-lesson-content [style*="margin-left"],
-    .nrl-lesson-content [style*="text-indent"] {
-        padding-left: 0 !important;
-        margin-left: 0 !important;
-        text-indent: 0 !important;
-    }
-    .nrl-lesson-content ul,
-    .nrl-lesson-content ol {
-        padding-left: 1.05rem !important;
-        margin-left: 0 !important;
-    }
-    .nrl-lesson-content ul ul,
-    .nrl-lesson-content ol ol,
-    .nrl-lesson-content ul ol,
-    .nrl-lesson-content ol ul {
-        padding-left: 0.85rem !important;
-    }
 }
 
 .nrl-lesson-content > *:first-child { margin-top: 0 !important; }
 .nrl-lesson-content > *:last-child { margin-bottom: 0 !important; }
 
 .nrl-lesson-content p {
-    margin: 0 0 0.85rem;
-    color: var(--nrl-muted);
+    margin: 0 0 0.9rem;
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
 }
-.nrl-lesson-content br {
-    display: block;
-    content: "";
-    margin-top: 0.55rem;
+.nrl-lesson-content li {
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
 }
 
 .nrl-lesson-content h1,
 .nrl-lesson-content h2,
 .nrl-lesson-content h3,
-.nrl-lesson-content h4,
-.nrl-lesson-content strong:has(+ br),
-.nrl-lesson-content p > strong:only-child {
-    color: var(--nrl-ink);
-}
-
-.nrl-lesson-content h1 {
-    font-size: 1.15rem;
-    line-height: 1.35;
-    font-weight: 800;
-    margin: 1.25rem 0 0.65rem;
-    letter-spacing: -0.02em;
-}
-.nrl-lesson-content h2 {
-    font-size: 1.05rem;
-    line-height: 1.35;
-    font-weight: 800;
-    margin: 1.15rem 0 0.55rem;
-}
-.nrl-lesson-content h3,
 .nrl-lesson-content h4 {
-    font-size: 0.98rem;
-    line-height: 1.4;
-    font-weight: 700;
-    margin: 1rem 0 0.45rem;
+    color: var(--nrl-ink);
+    line-height: 1.35;
+    margin: 1.1rem 0 0.55rem;
 }
-@media (min-width: 640px) {
-    .nrl-lesson-content h1 { font-size: 1.4rem; }
-    .nrl-lesson-content h2 { font-size: 1.2rem; }
-    .nrl-lesson-content h3 { font-size: 1.05rem; }
-}
+.nrl-lesson-content h1 { font-size: 1.2rem; font-weight: 800; }
+.nrl-lesson-content h2 { font-size: 1.08rem; font-weight: 800; }
+.nrl-lesson-content h3,
+.nrl-lesson-content h4 { font-size: 1rem; font-weight: 700; }
 
 .nrl-lesson-content img {
     display: block;
-    max-width: 100%;
     height: auto;
     border-radius: 14px;
-    margin: 0.85rem 0 1.1rem;
+    margin: 0.85rem auto 1.1rem;
 }
-.nrl-lesson-content figure {
-    margin: 0.85rem 0 1.1rem;
-}
+.nrl-lesson-content figure { margin: 0.85rem 0 1.1rem; }
 .nrl-lesson-content figcaption {
     margin-top: 0.4rem;
     font-size: 0.75rem;
@@ -350,26 +319,14 @@
 
 .nrl-lesson-content ul,
 .nrl-lesson-content ol {
-    padding-left: 1.05rem;
-    margin: 0.45rem 0 0.85rem;
+    padding-left: 1.25rem;
+    margin: 0.5rem 0 0.95rem;
     list-style-position: outside;
 }
 .nrl-lesson-content ul { list-style: disc; }
 .nrl-lesson-content ol { list-style: decimal; }
-.nrl-lesson-content li {
-    margin: 0.28rem 0;
-    padding-left: 0.1rem;
-}
-.nrl-lesson-content li > p {
-    margin: 0.2rem 0 0.45rem;
-}
-.nrl-lesson-content ul ul,
-.nrl-lesson-content ol ol,
-.nrl-lesson-content ul ol,
-.nrl-lesson-content ol ul {
-    padding-left: 0.9rem;
-    margin: 0.25rem 0 0.45rem;
-}
+.nrl-lesson-content li { margin: 0.28rem 0; }
+.nrl-lesson-content li > p { margin: 0.2rem 0 0.45rem; }
 .nrl-lesson-content ul ul { list-style: circle; }
 .nrl-lesson-content ol ol { list-style: lower-alpha; }
 .nrl-lesson-content ol ol ol { list-style: lower-roman; }
@@ -379,7 +336,6 @@
     text-decoration: underline;
     text-underline-offset: 2px;
 }
-
 .nrl-lesson-content blockquote {
     margin: 0.9rem 0;
     padding: 0.75rem 0.9rem;
@@ -387,10 +343,8 @@
     background: var(--nrl-soft);
     border-radius: 0 12px 12px 0;
     color: var(--nrl-ink);
-    font-size: 0.9rem;
 }
 
-/* Tables: scroll container + polished look */
 .nrl-table-scroll {
     position: relative;
     margin: 0.85rem 0 1.15rem;
@@ -421,22 +375,12 @@
 @media (min-width: 640px) {
     .nrl-table-scroll::after { display: none; }
 }
-
 .nrl-table-scroll-inner {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
     scrollbar-width: thin;
-    scrollbar-color: #94a3b8 transparent;
 }
-.nrl-table-scroll-inner::-webkit-scrollbar {
-    height: 6px;
-}
-.nrl-table-scroll-inner::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 999px;
-}
-
 .nrl-lesson-content table {
     width: max-content;
     min-width: 100%;
@@ -451,7 +395,6 @@
 @media (min-width: 640px) {
     .nrl-lesson-content table { font-size: 0.875rem; }
 }
-
 .nrl-lesson-content table th,
 .nrl-lesson-content table td {
     border: none;
@@ -460,99 +403,138 @@
     padding: 0.55rem 0.7rem;
     vertical-align: top;
     text-align: left;
-    white-space: normal;
     min-width: 7.5rem;
 }
 .nrl-lesson-content table th:last-child,
-.nrl-lesson-content table td:last-child {
-    border-right: none;
-}
-.nrl-lesson-content table tr:last-child td {
-    border-bottom: none;
-}
+.nrl-lesson-content table td:last-child { border-right: none; }
+.nrl-lesson-content table tr:last-child td { border-bottom: none; }
 .nrl-lesson-content table th {
     background: #f1f5f9;
     color: #0f172a;
     font-weight: 800;
     font-size: 0.72rem;
-    letter-spacing: 0.02em;
-    text-transform: none;
-    position: sticky;
-    top: 0;
-    z-index: 1;
 }
-@media (min-width: 640px) {
-    .nrl-lesson-content table th { font-size: 0.8rem; }
-    .nrl-lesson-content table th,
-    .nrl-lesson-content table td { padding: 0.7rem 0.85rem; }
-}
-.nrl-lesson-content table tbody tr:nth-child(even) td {
-    background: #f8fafc;
-}
-.nrl-lesson-content table tbody tr:active td {
-    background: #ecfeff;
-}
+.nrl-lesson-content table tbody tr:nth-child(even) td { background: #f8fafc; }
 
-.nrl-lesson-content iframe,
-.nrl-lesson-content video {
-    max-width: 100%;
-    border-radius: 12px;
+.nrl-timeout-modal {
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1.25rem;
 }
+.nrl-timeout-box {
+    width: min(100%, 360px);
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.6rem 1.35rem;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+.nrl-timeout-icon {
+    width: 56px; height: 56px; margin: 0 auto 0.85rem;
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    background: #fff1f2; color: #e11d48; font-size: 1.25rem;
+}
+.nrl-timeout-title { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0 0 0.4rem; }
+.nrl-timeout-body { font-size: 0.85rem; color: #64748b; margin: 0 0 1rem; line-height: 1.5; }
+.nrl-timeout-spin {
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    font-size: 0.75rem; font-weight: 700; color: #0f172a;
+}
+.nrl-spinner {
+    width: 16px; height: 16px; border-radius: 999px;
+    border: 2px solid #e2e8f0; border-top-color: #0f7e6e;
+    animation: nrlSpin 0.8s linear infinite;
+}
+@keyframes nrlSpin { to { transform: rotate(360deg); } }
 </style>
 
 <script>
 (function () {
     const root = document.getElementById('nrlLessonContent');
-    if (!root) return;
+    if (root) {
+        root.querySelectorAll('table').forEach((table) => {
+            if (table.closest('.nrl-table-scroll')) return;
 
-    // Flatten excessive TinyMCE indents on mobile so text sits closer to the left
-    const isMobile = window.matchMedia('(max-width: 639px)').matches;
-    if (isMobile) {
-        root.querySelectorAll('[style]').forEach((el) => {
-            if (!el.style) return;
-            el.style.marginLeft = '';
-            el.style.paddingLeft = '';
-            el.style.textIndent = '';
-            if (el.style.textAlign === 'center' && !el.querySelector('img')) {
-                el.style.textAlign = 'left';
-            }
-        });
-        root.querySelectorAll('p, div, li, h1, h2, h3, h4').forEach((el) => {
-            el.removeAttribute('data-mce-style');
+            table.removeAttribute('width');
+            table.style.width = '';
+            table.style.maxWidth = '';
+            table.querySelectorAll('td, th, col').forEach((cell) => {
+                cell.removeAttribute('width');
+                if (cell.style) {
+                    cell.style.width = '';
+                    cell.style.minWidth = '';
+                }
+            });
+
+            const wrap = document.createElement('div');
+            wrap.className = 'nrl-table-scroll';
+            const inner = document.createElement('div');
+            inner.className = 'nrl-table-scroll-inner';
+            table.parentNode.insertBefore(wrap, table);
+            wrap.appendChild(inner);
+            inner.appendChild(table);
+
+            const markScrollable = () => {
+                wrap.classList.toggle('is-scrollable', inner.scrollWidth > inner.clientWidth + 4);
+            };
+            markScrollable();
+            window.addEventListener('resize', markScrollable, { passive: true });
+            if (window.ResizeObserver) new ResizeObserver(markScrollable).observe(inner);
         });
     }
 
-    root.querySelectorAll('table').forEach((table) => {
-        if (table.closest('.nrl-table-scroll')) return;
+    const remaining = Number(@json((int) ($remaining_seconds ?? 120)));
+    const form = document.getElementById('nrlCompleteForm');
+    const timerText = document.getElementById('nrlTimerText');
+    const timerChip = document.getElementById('nrlTimerChip');
+    const timeoutInput = document.getElementById('nrlIsTimeout');
+    const modal = document.getElementById('nrlTimeoutModal');
+    const completeBtn = document.getElementById('nrlCompleteBtn');
+    if (!form || !timerText) return;
 
-        table.removeAttribute('width');
-        table.style.width = '';
-        table.style.maxWidth = '';
-        table.querySelectorAll('td, th, col').forEach((cell) => {
-            cell.removeAttribute('width');
-            if (cell.style) {
-                cell.style.width = '';
-                cell.style.minWidth = '';
-            }
-        });
+    const endAt = Date.now() + (Math.max(0, remaining) * 1000);
+    let submitted = false;
 
-        const wrap = document.createElement('div');
-        wrap.className = 'nrl-table-scroll';
-        const inner = document.createElement('div');
-        inner.className = 'nrl-table-scroll-inner';
+    function formatTime(totalSec) {
+        const s = Math.max(0, Math.floor(totalSec));
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+    }
 
-        table.parentNode.insertBefore(wrap, table);
-        wrap.appendChild(inner);
-        inner.appendChild(table);
-
-        const markScrollable = () => {
-            wrap.classList.toggle('is-scrollable', inner.scrollWidth > inner.clientWidth + 4);
-        };
-        markScrollable();
-        window.addEventListener('resize', markScrollable, { passive: true });
-        if (window.ResizeObserver) {
-            new ResizeObserver(markScrollable).observe(inner);
+    function lockAndSubmit(isTimeout) {
+        if (submitted) return;
+        submitted = true;
+        if (timeoutInput) timeoutInput.value = isTimeout ? '1' : '0';
+        if (completeBtn) {
+            completeBtn.disabled = true;
+            completeBtn.innerHTML = '<span class="nrl-spinner" style="margin-right:0.45rem"></span> Menyimpan...';
         }
+        if (isTimeout && modal) modal.style.display = 'flex';
+        form.submit();
+    }
+
+    function tick() {
+        const left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+        timerText.textContent = formatTime(left);
+        if (timerChip) {
+            timerChip.classList.toggle('is-warn', left <= 60 && left > 20);
+            timerChip.classList.toggle('is-danger', left <= 20);
+        }
+        if (left <= 0) {
+            clearInterval(timer);
+            lockAndSubmit(true);
+        }
+    }
+
+    tick();
+    const timer = setInterval(tick, 250);
+
+    form.addEventListener('submit', function () {
+        submitted = true;
+        if (completeBtn) completeBtn.disabled = true;
     });
 })();
 </script>

@@ -15,9 +15,6 @@ class LessonController extends Controller
         $lesson = Lesson::with('course.lessons', 'course.preQuestions')->findOrFail($id);
         $user_id = Auth::id();
 
-        // ── Pretest Gate ──────────────────────────────────────────────
-        // Jika kursus ini punya soal pretest, siswa WAJIB mengerjakan
-        // pretest terlebih dahulu sebelum bisa membuka bab manapun.
         if ($lesson->course->preQuestions->count() > 0) {
             $pretest_done = Result::where('user_id', $user_id)
                 ->where('course_id', $lesson->course_id)
@@ -29,27 +26,68 @@ class LessonController extends Controller
                     ->with('warning', 'Kamu harus mengerjakan Pre Test terlebih dahulu sebelum mengakses materi.');
             }
         }
-        // ─────────────────────────────────────────────────────────────
-        $progress = UserProgress::where('user_id', $user_id)
-            ->where('lesson_id', $id)
-            ->first();
 
-        $is_completed = $progress ? $progress->is_completed : false;
+        $progress = UserProgress::firstOrCreate(
+            ['user_id' => $user_id, 'lesson_id' => $id],
+            ['is_completed' => false, 'opened_at' => now()]
+        );
 
-        return view('student.lessons.show', compact('lesson', 'is_completed'));
+        if ($progress->is_completed) {
+            return redirect()->route('courses.detail', $lesson->course_id)
+                ->with('info', 'Bab ini sudah selesai dan terkunci. Kamu tidak bisa membukanya lagi.');
+        }
+
+        if (! $progress->opened_at) {
+            $progress->opened_at = now();
+            $progress->save();
+        }
+
+        $elapsed = $progress->opened_at->diffInSeconds(now());
+        $remaining_seconds = max(0, Lesson::STUDY_DURATION_SECONDS - (int) $elapsed);
+
+        if ($remaining_seconds <= 0) {
+            return $this->finalizeLesson($lesson, $user_id, true);
+        }
+
+        $is_completed = false;
+        $study_duration_seconds = Lesson::STUDY_DURATION_SECONDS;
+
+        return view('student.lessons.show', compact(
+            'lesson',
+            'is_completed',
+            'remaining_seconds',
+            'study_duration_seconds'
+        ));
     }
 
     public function complete($id)
     {
-        $lesson = Lesson::findOrFail($id);
+        $lesson = Lesson::with('course')->findOrFail($id);
         $user_id = Auth::id();
 
-        UserProgress::updateOrCreate(
-            ['user_id' => $user_id, 'lesson_id' => $id],
-            ['is_completed' => true]
-        );
+        $progress = UserProgress::where('user_id', $user_id)
+            ->where('lesson_id', $id)
+            ->first();
 
-        // Notification Logic
+        if ($progress && $progress->is_completed) {
+            return redirect()->route('courses.detail', $lesson->course_id)
+                ->with('info', 'Bab ini sudah selesai dan terkunci.');
+        }
+
+        return $this->finalizeLesson($lesson, $user_id, false);
+    }
+
+    private function finalizeLesson(Lesson $lesson, int $user_id, bool $fromTimeout)
+    {
+        $progress = UserProgress::firstOrNew(
+            ['user_id' => $user_id, 'lesson_id' => $lesson->id]
+        );
+        $progress->is_completed = true;
+        if (! $progress->opened_at) {
+            $progress->opened_at = now();
+        }
+        $progress->save();
+
         $course = $lesson->course;
         $nextLesson = Lesson::where('course_id', $course->id)
             ->where('order_number', '>', $lesson->order_number)
@@ -68,16 +106,27 @@ class LessonController extends Controller
             $type = 'result';
         }
 
-        Notification::create([
-            'user_id' => $user_id,
-            'title' => $title,
-            'message' => $message,
-            'type' => $type,
-            'action_url' => $action_url,
-            'is_read' => false,
-        ]);
+        $existsNotif = Notification::where('user_id', $user_id)
+            ->where('action_url', $action_url)
+            ->where('title', $title)
+            ->exists();
+
+        if (! $existsNotif) {
+            Notification::create([
+                'user_id' => $user_id,
+                'title' => $title,
+                'message' => $message,
+                'type' => $type,
+                'action_url' => $action_url,
+                'is_read' => false,
+            ]);
+        }
+
+        $flash = $fromTimeout
+            ? 'Waktu belajar 2 menit habis. Bab dikunci otomatis.'
+            : 'Bab telah diselesaikan dan dikunci!';
 
         return redirect()->route('courses.detail', $course->id)
-            ->with('success', 'Bab telah diselesaikan!');
+            ->with('success', $flash);
     }
 }

@@ -11,7 +11,12 @@ class UserProgress extends Model
 
     protected $table = 'user_progress';
 
-    protected $fillable = ['user_id', 'lesson_id', 'is_completed'];
+    protected $fillable = ['user_id', 'lesson_id', 'is_completed', 'opened_at'];
+
+    protected $casts = [
+        'is_completed' => 'boolean',
+        'opened_at' => 'datetime',
+    ];
 
     public function user()
     {

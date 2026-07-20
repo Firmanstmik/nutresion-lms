@@ -9,6 +9,8 @@ class Lesson extends Model
 {
     use HasFactory;
 
+    public const STUDY_DURATION_SECONDS = 120;
+
     protected $fillable = ['course_id', 'title', 'content', 'video_url', 'order_number'];
 
     public function course()
