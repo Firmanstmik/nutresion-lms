@@ -55,7 +55,7 @@
         </div>
     </div>
 
-    <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 pb-28 sm:pb-24">
+    <div class="max-w-5xl mx-auto px-2 sm:px-6 lg:px-8 pb-28 sm:pb-24">
         <div class="card-premium overflow-hidden nrl-lesson-card">
             <div class="aspect-video bg-black relative overflow-hidden">
                 @if($lesson->video_url)
@@ -168,7 +168,7 @@
                 @endif
             </div>
 
-            <div class="nrl-lesson-body p-4 sm:p-10 lg:p-12">
+            <div class="nrl-lesson-body px-3 py-4 sm:p-10 lg:p-12">
                 @php
                     $lessonContent = $lesson->content ?? '';
                     $hasHtml = \Illuminate\Support\Str::contains($lessonContent, ['<img', '<p', '<br', '<div', '<h', '<ul', '<ol', '<table']);
@@ -239,7 +239,7 @@
     }
 }
 
-/* Neutralize TinyMCE inline sizing so mobile stays readable */
+/* Neutralize TinyMCE inline sizing / indent so mobile stays left-aligned */
 .nrl-lesson-content,
 .nrl-lesson-content * {
     max-width: 100%;
@@ -250,12 +250,44 @@
 .nrl-lesson-content [style*="line-height"] {
     line-height: inherit !important;
 }
+@media (max-width: 639px) {
+    .nrl-lesson-content p,
+    .nrl-lesson-content div,
+    .nrl-lesson-content h1,
+    .nrl-lesson-content h2,
+    .nrl-lesson-content h3,
+    .nrl-lesson-content h4,
+    .nrl-lesson-content li,
+    .nrl-lesson-content span {
+        margin-left: 0 !important;
+        text-indent: 0 !important;
+        text-align: left !important;
+    }
+    .nrl-lesson-content [style*="padding-left"],
+    .nrl-lesson-content [style*="margin-left"],
+    .nrl-lesson-content [style*="text-indent"] {
+        padding-left: 0 !important;
+        margin-left: 0 !important;
+        text-indent: 0 !important;
+    }
+    .nrl-lesson-content ul,
+    .nrl-lesson-content ol {
+        padding-left: 1.05rem !important;
+        margin-left: 0 !important;
+    }
+    .nrl-lesson-content ul ul,
+    .nrl-lesson-content ol ol,
+    .nrl-lesson-content ul ol,
+    .nrl-lesson-content ol ul {
+        padding-left: 0.85rem !important;
+    }
+}
 
 .nrl-lesson-content > *:first-child { margin-top: 0 !important; }
 .nrl-lesson-content > *:last-child { margin-bottom: 0 !important; }
 
 .nrl-lesson-content p {
-    margin: 0 0 0.9rem;
+    margin: 0 0 0.85rem;
     color: var(--nrl-muted);
 }
 .nrl-lesson-content br {
@@ -318,14 +350,25 @@
 
 .nrl-lesson-content ul,
 .nrl-lesson-content ol {
-    padding-left: 1.2rem;
-    margin: 0.55rem 0 0.95rem;
+    padding-left: 1.05rem;
+    margin: 0.45rem 0 0.85rem;
+    list-style-position: outside;
 }
 .nrl-lesson-content ul { list-style: disc; }
 .nrl-lesson-content ol { list-style: decimal; }
 .nrl-lesson-content li {
     margin: 0.28rem 0;
-    padding-left: 0.15rem;
+    padding-left: 0.1rem;
+}
+.nrl-lesson-content li > p {
+    margin: 0.2rem 0 0.45rem;
+}
+.nrl-lesson-content ul ul,
+.nrl-lesson-content ol ol,
+.nrl-lesson-content ul ol,
+.nrl-lesson-content ol ul {
+    padding-left: 0.9rem;
+    margin: 0.25rem 0 0.45rem;
 }
 .nrl-lesson-content ul ul { list-style: circle; }
 .nrl-lesson-content ol ol { list-style: lower-alpha; }
@@ -461,6 +504,23 @@
 (function () {
     const root = document.getElementById('nrlLessonContent');
     if (!root) return;
+
+    // Flatten excessive TinyMCE indents on mobile so text sits closer to the left
+    const isMobile = window.matchMedia('(max-width: 639px)').matches;
+    if (isMobile) {
+        root.querySelectorAll('[style]').forEach((el) => {
+            if (!el.style) return;
+            el.style.marginLeft = '';
+            el.style.paddingLeft = '';
+            el.style.textIndent = '';
+            if (el.style.textAlign === 'center' && !el.querySelector('img')) {
+                el.style.textAlign = 'left';
+            }
+        });
+        root.querySelectorAll('p, div, li, h1, h2, h3, h4').forEach((el) => {
+            el.removeAttribute('data-mce-style');
+        });
+    }
 
     root.querySelectorAll('table').forEach((table) => {
         if (table.closest('.nrl-table-scroll')) return;
