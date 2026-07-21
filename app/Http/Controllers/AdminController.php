@@ -442,6 +442,7 @@ class AdminController extends Controller
             'content' => 'nullable|string',
             'video_url' => 'nullable|url',
             'order_number' => 'required|integer',
+            'duration_minutes' => 'required|integer|min:1|max:180',
         ]);
 
         Lesson::create([
@@ -450,6 +451,7 @@ class AdminController extends Controller
             'content' => $request->content,
             'video_url' => $request->video_url,
             'order_number' => $request->order_number,
+            'duration_minutes' => (int) $request->duration_minutes,
         ]);
 
         return back()->with('success', 'Lesson created successfully');
@@ -467,9 +469,10 @@ class AdminController extends Controller
             'content' => 'nullable|string',
             'video_url' => 'nullable|url',
             'order_number' => 'required|integer',
+            'duration_minutes' => 'required|integer|min:1|max:180',
         ]);
 
-        $lesson->update($request->only(['title', 'content', 'video_url', 'order_number']));
+        $lesson->update($request->only(['title', 'content', 'video_url', 'order_number', 'duration_minutes']));
 
         return back()->with('success', 'Lesson updated successfully');
     }

@@ -43,20 +43,22 @@ class LessonController extends Controller
         }
 
         $elapsed = $progress->opened_at->diffInSeconds(now());
-        $remaining_seconds = max(0, Lesson::STUDY_DURATION_SECONDS - (int) $elapsed);
+        $study_duration_seconds = $lesson->studyDurationSeconds();
+        $remaining_seconds = max(0, $study_duration_seconds - (int) $elapsed);
 
         if ($remaining_seconds <= 0) {
             return $this->finalizeLesson($lesson, $user_id, true);
         }
 
         $is_completed = false;
-        $study_duration_seconds = Lesson::STUDY_DURATION_SECONDS;
+        $study_duration_minutes = $lesson->studyDurationMinutes();
 
         return view('student.lessons.show', compact(
             'lesson',
             'is_completed',
             'remaining_seconds',
-            'study_duration_seconds'
+            'study_duration_seconds',
+            'study_duration_minutes'
         ));
     }
 
@@ -122,8 +124,9 @@ class LessonController extends Controller
             ]);
         }
 
+        $minutes = $lesson->studyDurationMinutes();
         $flash = $fromTimeout
-            ? 'Waktu belajar 2 menit habis. Bab dikunci otomatis.'
+            ? 'Waktu belajar '.$minutes.' menit habis. Bab dikunci otomatis.'
             : 'Bab telah diselesaikan dan dikunci!';
 
         return redirect()->route('courses.detail', $course->id)

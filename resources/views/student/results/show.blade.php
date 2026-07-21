@@ -12,10 +12,17 @@
     $accentSoft = $pass ? 'rgba(20,184,166,0.18)' : 'rgba(244,63,94,0.18)';
     $badgeBg = $pass ? 'bg-emerald-500/15 border-emerald-300/25 text-emerald-50' : 'bg-rose-500/15 border-rose-300/25 text-rose-50';
     $badgeIcon = $pass ? 'fa-circle-check' : 'fa-circle-xmark';
-    $correctCount = $hasDetail ? $answers->where('is_correct', true)->count() : 0;
-    $answeredCount = $hasDetail ? $answers->whereNotNull('selected_answer')->count() : 0;
-    $unansweredCount = $hasDetail ? ($answers->count() - $answeredCount) : 0;
-    $wrongCount = $hasDetail ? max(0, $answers->count() - $correctCount - $unansweredCount) : 0;
+
+    $mcAnswers = $hasDetail
+        ? $answers->filter(function ($answer) {
+            $q = $answer->question;
+            return ! ($q && method_exists($q, 'isLikert') && $q->isLikert());
+        })
+        : collect();
+    $correctCount = $mcAnswers->where('is_correct', true)->count();
+    $answeredCount = $mcAnswers->whereNotNull('selected_answer')->count();
+    $unansweredCount = max(0, $mcAnswers->count() - $answeredCount);
+    $wrongCount = max(0, $mcAnswers->count() - $correctCount - $unansweredCount);
 @endphp
 
 <div class="rsx-root">
@@ -72,17 +79,10 @@
                         <div class="rsx-stat-label">Tes</div>
                         <div class="rsx-stat-val">{{ $typeLabel }}</div>
                     </div>
-                    @if(!is_null($result->mc_score) || !is_null($result->likert_score))
-                        <div class="rsx-stat">
-                            <div class="rsx-stat-label">PG / Sikap</div>
-                            <div class="rsx-stat-val">{{ $result->mc_score ?? '—' }} / {{ $result->likert_score ?? '—' }}</div>
-                        </div>
-                    @else
-                        <div class="rsx-stat">
-                            <div class="rsx-stat-label">Kursus</div>
-                            <div class="rsx-stat-val">{{ Str::limit($result->course->title, 22) }}</div>
-                        </div>
-                    @endif
+                    <div class="rsx-stat">
+                        <div class="rsx-stat-label">Kursus</div>
+                        <div class="rsx-stat-val">{{ Str::limit($result->course->title, 22) }}</div>
+                    </div>
                 </div>
 
                 <div class="rsx-sep"></div>
@@ -92,7 +92,7 @@
                         <div class="rsx-detailline-title">Ringkasan Jawaban</div>
                         <div class="rsx-detailline-sub">
                             @if($hasDetail)
-                                {{ $answers->count() }} soal · {{ $answeredCount }} terjawab · {{ $unansweredCount }} kosong
+                                {{ $answers->count() }} soal · {{ $mcAnswers->count() }} PG · ringkasan benar/salah hanya untuk pilihan ganda
                             @else
                                 Detail jawaban belum tersedia pada perangkat/database ini.
                             @endif
@@ -108,7 +108,7 @@
                                 <span>{{ $correctCount }}</span>
                             </div>
                             <div class="rsx-break-bar">
-                                <div class="rsx-break-fill" style="--p: {{ $answers->count() > 0 ? (int) round(($correctCount / $answers->count()) * 100) : 0 }};"></div>
+                                <div class="rsx-break-fill" style="--p: {{ $mcAnswers->count() > 0 ? (int) round(($correctCount / $mcAnswers->count()) * 100) : 0 }};"></div>
                             </div>
                         </div>
                         <div class="rsx-break-item rsx-break-bad">
@@ -117,7 +117,7 @@
                                 <span>{{ $wrongCount }}</span>
                             </div>
                             <div class="rsx-break-bar">
-                                <div class="rsx-break-fill" style="--p: {{ $answers->count() > 0 ? (int) round(($wrongCount / $answers->count()) * 100) : 0 }};"></div>
+                                <div class="rsx-break-fill" style="--p: {{ $mcAnswers->count() > 0 ? (int) round(($wrongCount / $mcAnswers->count()) * 100) : 0 }};"></div>
                             </div>
                         </div>
                         <div class="rsx-break-item rsx-break-skip">
@@ -126,7 +126,7 @@
                                 <span>{{ $unansweredCount }}</span>
                             </div>
                             <div class="rsx-break-bar">
-                                <div class="rsx-break-fill" style="--p: {{ $answers->count() > 0 ? (int) round(($unansweredCount / $answers->count()) * 100) : 0 }};"></div>
+                                <div class="rsx-break-fill" style="--p: {{ $mcAnswers->count() > 0 ? (int) round(($unansweredCount / $mcAnswers->count()) * 100) : 0 }};"></div>
                             </div>
                         </div>
                     </div>
@@ -183,14 +183,13 @@
                         @endphp
                         <div class="rsx-q">
                             <div class="rsx-q-head">
-                                <div class="rsx-q-num {{ $isLikert ? ($points !== null && $points >= 4 ? 'rsx-q-ok' : 'rsx-q-bad') : ($isCorrect ? 'rsx-q-ok' : 'rsx-q-bad') }}">{{ $idx + 1 }}</div>
+                                <div class="rsx-q-num {{ $isLikert ? 'rsx-q-neutral' : ($isCorrect ? 'rsx-q-ok' : 'rsx-q-bad') }}">{{ $idx + 1 }}</div>
                                 <div class="rsx-q-body">
                                     <div class="rsx-q-title">{{ $q?->question ?? 'Soal tidak ditemukan' }}</div>
                                     <div class="rsx-q-meta">
                                         @if($isLikert)
-                                            <span class="rsx-q-tag rsx-tag-neutral">Sikap (Likert)</span>
+                                            <span class="rsx-q-tag rsx-tag-neutral">Pertanyaan Sikap</span>
                                             <span class="rsx-q-tag rsx-tag-neutral">Jawaban: <strong>{{ \App\Models\Question::likertLabel($selected) }}</strong></span>
-                                            <span class="rsx-q-tag {{ $points !== null && $points >= 4 ? 'rsx-tag-ok' : 'rsx-tag-bad' }}">Poin: <strong>{{ $points ?? '—' }}/5</strong></span>
                                         @else
                                             <span class="rsx-q-tag {{ $isCorrect ? 'rsx-tag-ok' : 'rsx-tag-bad' }}">{{ $isCorrect ? 'Benar' : 'Salah' }}</span>
                                             <span class="rsx-q-tag rsx-tag-neutral">Jawaban kamu: <strong>{{ $selected ?? '—' }}</strong></span>
@@ -203,13 +202,9 @@
                             @if($q && $isLikert)
                                 <div class="rsx-opts">
                                     @foreach(\App\Models\Question::LIKERT_OPTIONS as $opt => $optText)
-                                        @php
-                                            $isPick = (string) $selected === (string) $opt;
-                                            $state = $isPick ? 'picked_key' : 'default';
-                                        @endphp
-                                        <div class="rsx-opt {{ $isPick ? 'rsx-opt-picked-key' : '' }}">
-                                            <div class="rsx-opt-letter">{{ $opt }}</div>
-                                            <div class="rsx-opt-text">{{ $optText }}</div>
+                                        @php $isPick = (string) $selected === (string) $opt; @endphp
+                                        <div class="rsx-opt {{ $isPick ? 'rsx-opt-picked-neutral' : '' }}">
+                                            <div class="rsx-opt-text" style="padding-left:0.25rem;">{{ $optText }}</div>
                                             <div class="rsx-opt-badges">
                                                 @if($isPick)
                                                     <span class="rsx-opt-badge rsx-opt-badge-ok">
@@ -340,6 +335,7 @@
     .rsx-q-num{width:42px;height:42px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:950;color:#fff;flex-shrink:0}
     .rsx-q-ok{background:#14B8A6}
     .rsx-q-bad{background:#F43F5E}
+    .rsx-q-neutral{background:#64748B}
     .rsx-q-title{font-size:14px;font-weight:950;color:#0f172a;line-height:1.35}
     .rsx-q-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
     .rsx-q-tag{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid rgba(15,23,42,0.08);background:rgba(15,23,42,0.03);color:rgba(15,23,42,0.78)}
@@ -362,6 +358,7 @@
 
     .rsx-opt-key{border-color:rgba(20,184,166,0.22);box-shadow:0 12px 22px rgba(20,184,166,0.08)}
     .rsx-opt-picked-key{border-color:rgba(20,184,166,0.22);background:linear-gradient(180deg,#fff,rgba(20,184,166,0.06));box-shadow:0 14px 26px rgba(20,184,166,0.10)}
+    .rsx-opt-picked-neutral{border-color:rgba(100,116,139,0.28);background:linear-gradient(180deg,#fff,rgba(100,116,139,0.08));box-shadow:0 12px 22px rgba(15,23,42,0.06)}
     .rsx-opt-picked-wrong{border-color:rgba(244,63,94,0.22);background:linear-gradient(180deg,#fff,rgba(244,63,94,0.06));box-shadow:0 14px 26px rgba(244,63,94,0.10)}
 </style>
 

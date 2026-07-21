@@ -175,7 +175,6 @@
                             data-section="likert"
                         >
                         <div class="pst-option-inner">
-                            <span class="pst-opt-letter">{{ $value }}</span>
                             <span class="pst-opt-text">{{ $label }}</span>
                             <span class="pst-opt-check"><i class="fas fa-check"></i></span>
                         </div>
@@ -189,7 +188,7 @@
             <div class="pst-submit-bar">
                 <div class="pst-submit-note">
                     <i class="fas fa-info-circle"></i>
-                    Pilih tingkat persetujuanmu. Poin 5–1 dihitung otomatis.
+                    Pilih tingkat persetujuanmu sesuai pendapatmu.
                 </div>
                 <div class="pst-submit-actions">
                     @if($hasMc)
@@ -528,10 +527,11 @@
     color: #0B1E3F; font-size: 0.68rem; font-weight: 800;
     letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
 }
-.pst-likert-options .pst-opt-letter {
-    min-width: 1.75rem; height: 1.75rem;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 999px; font-size: 0.7rem;
+.pst-likert-options .pst-option-inner {
+    gap: 0.75rem;
+}
+.pst-likert-options .pst-opt-text {
+    padding-left: 0.15rem;
 }
 
 .pst-modal {

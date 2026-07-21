@@ -183,7 +183,6 @@
                             data-section="likert"
                         >
                         <div class="pt-option-inner">
-                            <span class="pt-opt-letter">{{ $value }}</span>
                             <span class="pt-opt-text">{{ $label }}</span>
                             <span class="pt-opt-check"><i class="fas fa-check"></i></span>
                         </div>
@@ -197,7 +196,7 @@
             <div class="pt-submit-bar">
                 <div class="pt-submit-note">
                     <i class="fas fa-info-circle"></i>
-                    Pilih tingkat persetujuanmu. Poin 5–1 dihitung otomatis.
+                    Pilih tingkat persetujuanmu sesuai pendapatmu.
                 </div>
                 <div class="pt-submit-actions">
                     @if($hasMc)
@@ -585,10 +584,11 @@
     color: #0B1E3F; font-size: 0.68rem; font-weight: 800;
     letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
 }
-.pt-likert-options .pt-opt-letter {
-    min-width: 1.75rem; height: 1.75rem;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 999px; font-size: 0.7rem;
+.pt-likert-options .pt-option-inner {
+    gap: 0.75rem;
+}
+.pt-likert-options .pt-opt-text {
+    padding-left: 0.15rem;
 }
 
 /* ── Timeout Modal ───────────────────────────────────────────── */

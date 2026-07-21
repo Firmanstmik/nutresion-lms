@@ -423,6 +423,7 @@
                     <th>No</th>
                     <th>Urutan</th>
                     <th>Judul Bab</th>
+                    <th>Durasi</th>
                     <th>Video URL</th>
                     <th style="text-align:right">Aksi</th>
                 </tr>
@@ -435,6 +436,7 @@
                         <span class="cp-order-badge">BAB {{ $lesson->order_number }}</span>
                     </td>
                     <td class="cp-td-title">{{ $lesson->title }}</td>
+                    <td class="cp-td-video">{{ $lesson->duration_minutes ?? 2 }} menit</td>
                     <td class="cp-td-video">{{ $lesson->video_url ?? '—' }}</td>
                     <td>
                         <div class="cp-actions">
@@ -442,6 +444,7 @@
                                     data-id="{{ $lesson->id }}" 
                                     data-title="{{ $lesson->title }}" 
                                     data-order="{{ $lesson->order_number }}" 
+                                    data-duration="{{ $lesson->duration_minutes ?? 2 }}"
                                     data-video="{{ $lesson->video_url }}" 
                                     data-content="{{ e(json_encode($lesson->content ?? '')) }}"
                                     class="cp-action-btn cp-btn-edit">
@@ -458,7 +461,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" style="text-align:center; padding:5rem; color:var(--c-muted); font-size:0.8rem; font-weight:600; letter-spacing:0.05em;">
+                    <td colspan="6" style="text-align:center; padding:5rem; color:var(--c-muted); font-size:0.8rem; font-weight:600; letter-spacing:0.05em;">
                         Belum ada data materi.
                     </td>
                 </tr>
@@ -477,6 +480,8 @@
             </div>
             <h4 style="font-weight:700; color:var(--c-navy); font-size:1.1rem; line-height:1.3;">{{ $lesson->title }}</h4>
             <div style="font-size:0.75rem; color:var(--c-muted); display:flex; align-items:center; gap:0.5rem;">
+                <i class="fas fa-clock"></i> {{ $lesson->duration_minutes ?? 2 }} menit
+                <span style="opacity:.4;">·</span>
                 <i class="fab fa-youtube"></i> {{ $lesson->video_url ?? 'No video' }}
             </div>
             <div style="display:flex; gap:0.75rem; padding-top:0.5rem; border-top:1px solid var(--c-surface);">
@@ -484,6 +489,7 @@
                         data-id="{{ $lesson->id }}" 
                         data-title="{{ $lesson->title }}" 
                         data-order="{{ $lesson->order_number }}" 
+                        data-duration="{{ $lesson->duration_minutes ?? 2 }}"
                         data-video="{{ $lesson->video_url }}" 
                         data-content="{{ e(json_encode($lesson->content ?? '')) }}"
                         class="cp-btn cp-btn-back" style="flex:1; justify-content:center; padding:0.6rem; color:var(--c-teal);">
@@ -518,7 +524,7 @@
         <div class="cp-modal-body">
             <form action="{{ route('admin.lessons.store', $course->id) }}" method="POST" id="addForm">
                 @csrf
-                <div style="display:grid; grid-template-columns:1fr 80px; gap:1rem;">
+                <div style="display:grid; grid-template-columns:1fr 80px 110px; gap:1rem;">
                     <div class="cp-field">
                         <label class="cp-label">Judul Bab</label>
                         <input type="text" name="title" required class="cp-input" placeholder="Judul materi">
@@ -526,6 +532,10 @@
                     <div class="cp-field">
                         <label class="cp-label">Order</label>
                         <input type="number" name="order_number" value="{{ $lessons->count() + 1 }}" required class="cp-input">
+                    </div>
+                    <div class="cp-field">
+                        <label class="cp-label">Durasi (menit)</label>
+                        <input type="number" name="duration_minutes" value="2" min="1" max="180" required class="cp-input" placeholder="2">
                     </div>
                 </div>
                 <div class="cp-field" style="margin-top:1.25rem;">
@@ -559,7 +569,7 @@
         <div class="cp-modal-body">
             <form id="editForm" method="POST">
                 @csrf @method('PUT')
-                <div style="display:grid; grid-template-columns:1fr 80px; gap:1rem;">
+                <div style="display:grid; grid-template-columns:1fr 80px 110px; gap:1rem;">
                     <div class="cp-field">
                         <label class="cp-label">Judul Bab</label>
                         <input type="text" name="title" id="editTitle" required class="cp-input">
@@ -567,6 +577,10 @@
                     <div class="cp-field">
                         <label class="cp-label">Order</label>
                         <input type="number" name="order_number" id="editOrderNumber" required class="cp-input">
+                    </div>
+                    <div class="cp-field">
+                        <label class="cp-label">Durasi (menit)</label>
+                        <input type="number" name="duration_minutes" id="editDurationMinutes" min="1" max="180" required class="cp-input">
                     </div>
                 </div>
                 <div class="cp-field" style="margin-top:1.25rem;">
@@ -779,6 +793,7 @@ function editLesson(btn) {
     form.action = `/admin/lessons/${btn.dataset.id}`;
     document.getElementById('editTitle').value = btn.dataset.title || '';
     document.getElementById('editOrderNumber').value = btn.dataset.order || '';
+    document.getElementById('editDurationMinutes').value = btn.dataset.duration || '2';
     document.getElementById('editVideoUrl').value = (btn.dataset.video === 'Tidak ada video' || !btn.dataset.video || btn.dataset.video === 'null') ? '' : btn.dataset.video;
 
     modal.classList.remove('hidden');

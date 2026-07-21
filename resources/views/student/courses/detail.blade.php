@@ -132,7 +132,7 @@
                             <p class="nrd-lesson-eyebrow">Bab {{ $loop->iteration }}</p>
                             <h4 class="nrd-lesson-title">{{ $lesson->title }}</h4>
                             <div class="nrd-lesson-meta">
-                                <span><i class="far fa-clock"></i> 2:00 Menit</span>
+                                <span><i class="far fa-clock"></i> {{ $lesson->studyDurationLabel() }}</span>
                                 <span><i class="far fa-file-alt"></i> Materi Belajar</span>
                                 @if($has_pre_test && !$pre_test_done)
                                     <span class="nrd-lock-hint"><i class="fas fa-lock"></i> Kerjakan Pre Test dulu</span>

@@ -187,7 +187,7 @@
                             <i class="fas fa-clock text-sm sm:text-base"></i>
                         </div>
                         <p class="text-xs sm:text-sm font-bold text-text-main leading-snug">
-                            Waktu belajar <span class="text-primary">2 menit</span>. Habis waktu = bab dikunci otomatis.
+                            Waktu belajar <span class="text-primary">{{ $study_duration_minutes ?? $lesson->studyDurationMinutes() }} menit</span>. Habis waktu = bab dikunci otomatis.
                         </p>
                     </div>
 
@@ -208,7 +208,7 @@
     <div class="nrl-timeout-box">
         <div class="nrl-timeout-icon"><i class="fas fa-hourglass-end"></i></div>
         <h2 class="nrl-timeout-title">Waktu Habis</h2>
-        <p class="nrl-timeout-body">Durasi belajar 2 menit telah berakhir. Bab ini dikunci otomatis.</p>
+        <p class="nrl-timeout-body">Durasi belajar {{ $study_duration_minutes ?? $lesson->studyDurationMinutes() }} menit telah berakhir. Bab ini dikunci otomatis.</p>
         <div class="nrl-timeout-spin">
             <div class="nrl-spinner"></div>
             <span>Mengunci bab...</span>
