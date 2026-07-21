@@ -446,7 +446,6 @@
                                     data-order="{{ $lesson->order_number }}" 
                                     data-duration="{{ $lesson->duration_minutes ?? 2 }}"
                                     data-video="{{ $lesson->video_url }}" 
-                                    data-content="{{ e(json_encode($lesson->content ?? '')) }}"
                                     class="cp-action-btn cp-btn-edit">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -491,7 +490,6 @@
                         data-order="{{ $lesson->order_number }}" 
                         data-duration="{{ $lesson->duration_minutes ?? 2 }}"
                         data-video="{{ $lesson->video_url }}" 
-                        data-content="{{ e(json_encode($lesson->content ?? '')) }}"
                         class="cp-btn cp-btn-back" style="flex:1; justify-content:center; padding:0.6rem; color:var(--c-teal);">
                     EDIT
                 </button>
@@ -600,6 +598,7 @@
 </div>
 
 <div id="lessonEditorConfig" data-upload-url="{{ route('admin.lessons.upload-image') }}" style="display:none;"></div>
+<script type="application/json" id="lessonContentsMap">@json($lessons->mapWithKeys(fn ($lesson) => [(string) $lesson->id => $lesson->content ?? ''])->all())</script>
 
 <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
 <script>
@@ -609,6 +608,32 @@ function openAddModal() {
     if (editor) editor.setContent('');
 }
 function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
+
+function getLessonContentById(id) {
+    const el = document.getElementById('lessonContentsMap');
+    if (!el) return '';
+    try {
+        const map = JSON.parse(el.textContent || '{}');
+        const key = String(id);
+        return map[key] == null ? '' : String(map[key]);
+    } catch (e) {
+        return '';
+    }
+}
+
+function normalizeEditorHtml(content) {
+    let html = content == null ? '' : String(content);
+    if (!html) return '';
+
+    // If content was saved/loaded as escaped HTML entities, decode once.
+    if (html.includes('&lt;') && html.includes('&gt;') && !html.includes('<p') && !html.includes('<div')) {
+        const tmp = document.createElement('textarea');
+        tmp.innerHTML = html;
+        html = tmp.value;
+    }
+
+    return html;
+}
 
 function initLessonEditors() {
     const uploadUrl = document.getElementById('lessonEditorConfig')?.dataset?.uploadUrl || '';
@@ -650,16 +675,20 @@ function initLessonEditors() {
 
     window.tinymce.init({
         selector: '#addContent,#editContent',
-        height: 360,
+        height: 420,
         menubar: false,
         branding: false,
         resize: true,
-        toolbar_mode: 'wrap',
+        toolbar_mode: 'sliding',
         toolbar_sticky: true,
         toolbar_sticky_offset: 110,
-        plugins: 'lists advlist link image table code autoresize',
-        toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | sublist | link image table | removeformat | code',
+        plugins: 'lists advlist link image table autoresize',
+        toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | sublist | link image table | removeformat',
         lists_indent_on_tab: true,
+        paste_data_images: true,
+        paste_remove_styles_if_webkit: true,
+        paste_webkit_styles: 'none',
+        browser_spellcheck: true,
         setup: function (editor) {
             editor.ui.registry.addButton('sublist', {
                 icon: 'indent',
@@ -709,7 +738,7 @@ function initLessonEditors() {
             editor.addShortcut('meta+]', 'Indent', () => editor.execCommand('Indent'));
             editor.addShortcut('meta+[', 'Outdent', () => editor.execCommand('Outdent'));
         },
-        content_style: 'body{font-family:DM Sans, Plus Jakarta Sans, sans-serif;font-size:14px;line-height:1.7} img{max-width:100%;height:auto;border-radius:16px}',
+        content_style: 'body{font-family:DM Sans, Plus Jakarta Sans, sans-serif;font-size:14px;line-height:1.7;color:#1e293b} p{margin:0 0 .75rem} img{max-width:100%;height:auto;border-radius:16px} table{width:100%;border-collapse:collapse} td,th{border:1px solid #e2e8f0;padding:8px}',
         image_caption: true,
         automatic_uploads: true,
         images_upload_handler: function (blobInfo) {
@@ -764,31 +793,23 @@ function initLessonEditors() {
     if (editForm) editForm.addEventListener('submit', function () { window.tinymce?.triggerSave(); });
 }
 
-function parseLessonContent(raw) {
-    if (raw == null || raw === '') return '';
-    try {
-        const parsed = JSON.parse(raw);
-        return parsed == null ? '' : String(parsed);
-    } catch (e) {
-        return String(raw);
-    }
-}
-
 function setEditEditorContent(content) {
+    const html = normalizeEditorHtml(content);
     const editor = window.tinymce?.get('editContent');
     if (editor) {
-        editor.setContent(content || '');
+        if (editor.mode?.set) editor.mode.set('design');
+        editor.setContent(html || '');
         return true;
     }
     const ta = document.getElementById('editContent');
-    if (ta) ta.value = content || '';
+    if (ta) ta.value = html || '';
     return false;
 }
 
 function editLesson(btn) {
     const modal = document.getElementById('editModal');
     const form = document.getElementById('editForm');
-    const content = parseLessonContent(btn.getAttribute('data-content'));
+    const content = getLessonContentById(btn.dataset.id);
 
     form.action = `/admin/lessons/${btn.dataset.id}`;
     document.getElementById('editTitle').value = btn.dataset.title || '';
@@ -815,7 +836,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initLessonEditors();
 
     const style = document.createElement('style');
-    style.textContent = '.cp-tox-menu-close{position:absolute;top:8px;right:10px;width:28px;height:28px;border-radius:8px;border:1px solid rgba(229,231,235,1);background:#fff;color:#111827;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer} .cp-tox-menu-close:hover{background:#F9FAFB}';
+    style.textContent = '.cp-tox-menu-close{position:absolute;top:8px;right:10px;width:28px;height:28px;border-radius:8px;border:1px solid rgba(229,231,235,1);background:#fff;color:#111827;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer} .cp-tox-menu-close:hover{background:#F9FAFB} .tox-tinymce{border-radius:12px!important;border:1px solid #e5e7eb!important} .tox-editor-header{padding:4px!important}';
     document.head.appendChild(style);
 
     const obs = new MutationObserver(() => {
