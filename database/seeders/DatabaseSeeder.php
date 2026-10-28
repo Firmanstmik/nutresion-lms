@@ -37,7 +37,8 @@ class DatabaseSeeder extends Seeder
         User::create([
             'name' => 'Maoza Ramadhani',
             'username' => '12345678', // NISN as username
-            'password' => Hash::make('12345678'), // NISN as password
+            'nis' => '1234',
+            'password' => Hash::make('1234'), // NIS as password
             'school_id' => $school->id,
             'role' => 'student',
         ]);

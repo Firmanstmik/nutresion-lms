@@ -918,7 +918,7 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                 <tr>
                     <th class="sp-th" style="width:56px">No.</th>
                     <th class="sp-th">Nama Peserta</th>
-                    <th class="sp-th">NISN / Username</th>
+                    <th class="sp-th">NISN / NIS</th>
                     <th class="sp-th">Asal Lembaga</th>
                     <th class="sp-th" style="width:180px">Progress</th>
                     <th class="sp-th" style="text-align:right">Tindakan</th>
@@ -945,6 +945,7 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                             <i class="fas fa-id-badge" style="font-size:0.5rem"></i>
                             {{ $student->username }}
                         </span>
+                        <div class="sp-student-role" style="margin-top:0.3rem">NIS: {{ $student->nis ?? '—' }}</div>
                     </td>
                     <td class="sp-td">
                         <div class="sp-school-cell">
@@ -968,6 +969,7 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                                     data-id="{{ $student->id }}"
                                     data-name="{{ $student->name }}"
                                     data-username="{{ $student->username }}"
+                                    data-nis="{{ $student->nis }}"
                                     data-school_id="{{ $student->school_id }}"
                                     class="sp-action-btn sp-action-edit"
                                     title="Edit">
@@ -1022,6 +1024,10 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                         NISN: {{ $student->username }}
                     </div>
                     <div class="sp-card-nisn">
+                        <i class="fas fa-key"></i>
+                        NIS: {{ $student->nis ?? '—' }}
+                    </div>
+                    <div class="sp-card-nisn">
                         <i class="fas fa-list-check"></i>
                         Progress: {{ ($p['total'] ?? 0) > 0 ? ($p['completed'].'/'.$p['total'].' Bab') : '—' }}
                     </div>
@@ -1040,6 +1046,7 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                             data-id="{{ $student->id }}"
                             data-name="{{ $student->name }}"
                             data-username="{{ $student->username }}"
+                            data-nis="{{ $student->nis }}"
                             data-school_id="{{ $student->school_id }}"
                             class="sp-card-btn sp-card-btn-edit">
                         <i class="fas fa-pen"></i>
@@ -1106,14 +1113,28 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                 <div class="sp-field">
                     <div class="sp-field-label-row">
                         <span class="sp-label">NISN</span>
-                        <span class="sp-optional-tag">Digunakan sebagai Username &amp; Password</span>
+                        <span class="sp-optional-tag">Digunakan sebagai Username</span>
                     </div>
                     <div class="sp-input-wrap">
                         <i class="fas fa-id-badge sp-input-icon"></i>
                         <input type="text" name="username" id="addUsername" required
                                class="sp-input"
                                placeholder="Nomor Induk Siswa Nasional">
-                        <input type="hidden" name="password" id="addPasswordField">
+                    </div>
+                </div>
+
+                <div class="sp-field">
+                    <div class="sp-field-label-row">
+                        <span class="sp-label">NIS</span>
+                        <span class="sp-optional-tag">4 angka &middot; Digunakan sebagai Password</span>
+                    </div>
+                    <div class="sp-input-wrap">
+                        <i class="fas fa-key sp-input-icon"></i>
+                        <input type="text" name="nis" required
+                               inputmode="numeric" pattern="[0-9]{4}" maxlength="4" minlength="4" autocomplete="off"
+                               title="NIS harus 4 angka"
+                               class="sp-input"
+                               placeholder="Contoh: 0421">
                     </div>
                 </div>
 
@@ -1135,7 +1156,6 @@ tr:hover .sp-school-name { color: var(--s-ink); }
 
         <div class="sp-modal-foot">
             <button type="submit" form="addForm"
-                    onclick="document.getElementById('addPasswordField').value = document.getElementById('addUsername').value"
                     class="sp-submit-btn">
                 <i class="fas fa-user-plus"></i>
                 Daftarkan Peserta
@@ -1186,14 +1206,16 @@ tr:hover .sp-school-name { color: var(--s-ink); }
 
                 <div class="sp-field">
                     <div class="sp-field-label-row">
-                        <span class="sp-label">Password Baru</span>
-                        <span class="sp-optional-tag">Opsional</span>
+                        <span class="sp-label">NIS (Password)</span>
+                        <span class="sp-optional-tag">4 angka &middot; Kosongkan jika tidak diubah</span>
                     </div>
                     <div class="sp-input-wrap">
-                        <i class="fas fa-lock sp-input-icon"></i>
-                        <input type="password" name="password"
+                        <i class="fas fa-key sp-input-icon"></i>
+                        <input type="text" name="nis" id="editNis"
+                               inputmode="numeric" pattern="[0-9]{4}" maxlength="4" minlength="4" autocomplete="off"
+                               title="NIS harus 4 angka"
                                class="sp-input"
-                               placeholder="Kosongkan jika tidak diubah">
+                               placeholder="Contoh: 0421">
                     </div>
                 </div>
 
@@ -1243,6 +1265,7 @@ function editStudent(btn) {
     document.getElementById('editForm').action   = `/admin/students/${btn.dataset.id}`;
     document.getElementById('editName').value    = btn.dataset.name;
     document.getElementById('editUsername').value = btn.dataset.username;
+    document.getElementById('editNis').value      = btn.dataset.nis || '';
     document.getElementById('editSchoolId').value = btn.dataset.school_id;
     openModal('editModal');
 }

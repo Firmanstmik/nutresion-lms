@@ -22,12 +22,12 @@
 
         <div class="fg">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                <label class="fl" style="margin-bottom:0;">NISN</label>
+                <label class="fl" style="margin-bottom:0;">NIS</label>
             </div>
             <div class="fw">
                 <span class="fi-ic"><i class="fas fa-lock"></i></span>
                 <input type="password" name="password" required
-                    placeholder="Ketik nomor NISN kamu"
+                    placeholder="Ketik 4 angka NIS kamu"
                     class="fi nisn-field" style="padding-right:40px;">
                 <button type="button" class="fi-tog nisn-toggle">
                     <i class="fas fa-eye-slash eye-icon"></i>
@@ -40,7 +40,7 @@
                 <input type="checkbox" name="remember" class="rem-chk">
                 <span class="rem-txt">Ingat Saya</span>
             </label>
-            <a href="#" class="fog-lnk">Lupa NISN?</a>
+            <a href="#" class="fog-lnk">Lupa NIS?</a>
         </div>
 
         <button type="submit" class="btn-sub">

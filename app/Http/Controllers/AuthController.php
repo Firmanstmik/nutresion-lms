@@ -49,7 +49,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'identity' => 'Nama atau NISN tidak valid.',
+            'identity' => 'Nama atau NIS tidak valid.',
         ]);
     }
 

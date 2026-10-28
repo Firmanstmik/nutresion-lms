@@ -5,7 +5,7 @@ Sistem Manajemen Pembelajaran (LMS) modern yang dibangun dengan Laravel, Tailwin
 ## 🚀 Fitur Utama
 
 ### Role: Siswa
-- **Login Sederhana**: Masuk hanya dengan Nama dan NISN.
+- **Login Sederhana**: Siswa masuk dengan Nama Lengkap dan NIS (4 angka). NISN tetap menjadi ID/username siswa.
 - **Progress Tracking**: Progress tersimpan otomatis setiap menyelesaikan bab.
 - **Unlockable Post Test**: Post test hanya terbuka setelah seluruh materi selesai dibaca.
 - **Hasil Instan**: Skor otomatis dihitung dan status kelulusan ditampilkan.
@@ -71,8 +71,8 @@ Gunakan akun berikut untuk mencoba sistem:
 - **Password**: `password`
 
 ### Siswa
-- **Nama (Username)**: `12345678` (NISN)
-- **NISN (Password)**: `12345678`
+- **Nama Lengkap**: `Maoza Ramadhani` (NISN/username: `12345678`)
+- **NIS (Password)**: `1234`
 
 ---
 

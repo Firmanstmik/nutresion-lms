@@ -139,15 +139,19 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|unique:users',
-            'password' => 'required|string|min:4', // NISN
+            'username' => 'required|string|unique:users', // NISN
+            'nis' => 'required|digits:4', // also the login password
             'school_id' => 'required|exists:schools,id',
+        ], [
+            'nis.required' => 'NIS wajib diisi.',
+            'nis.digits' => 'NIS harus 4 angka.',
         ]);
 
         User::create([
             'name' => $request->name,
             'username' => $request->username,
-            'password' => Hash::make($request->password),
+            'nis' => $request->nis,
+            'password' => Hash::make($request->nis),
             'school_id' => $request->school_id,
             'role' => 'student',
         ]);
@@ -161,8 +165,10 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|unique:users,username,'.$user->id,
-            'password' => 'nullable|string|min:4',
+            'nis' => 'nullable|digits:4',
             'school_id' => 'required|exists:schools,id',
+        ], [
+            'nis.digits' => 'NIS harus 4 angka.',
         ]);
 
         $data = [
@@ -171,8 +177,9 @@ class AdminController extends Controller
             'school_id' => $request->school_id,
         ];
 
-        if ($request->password) {
-            $data['password'] = Hash::make($request->password);
+        if ($request->filled('nis')) {
+            $data['nis'] = $request->nis;
+            $data['password'] = Hash::make($request->nis);
         }
 
         $user->update($data);

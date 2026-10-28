@@ -384,7 +384,7 @@ class NutritionMeasurementTest extends TestCase
         $this->actingAs($admin)->post('/admin/students', [
             'name' => 'Siswa Baru',
             'username' => '9988776655',
-            'password' => '9988776655',
+            'nis' => '0421',
             'school_id' => $school->id,
         ])->assertSessionHasNoErrors();
 
