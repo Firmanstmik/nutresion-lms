@@ -141,6 +141,16 @@
                     </div>
                     
                     <div class="pr-actions">
+                        <a href="{{ route('nutrition.index') }}" class="pr-btn-logout pr-btn-nutrition" style="margin-bottom:0.75rem; text-decoration:none;">
+                            <div class="pr-btn-logout-icon" style="background:var(--pr-primary-glow); color:var(--pr-primary);">
+                                <i data-lucide="heart-pulse"></i>
+                            </div>
+                            <div class="pr-btn-logout-text">
+                                <span style="color:var(--pr-navy);">Cek Status Gizi (IMT/U)</span>
+                                <small style="color:var(--pr-text-muted); opacity:1;">Lengkapi data, hitung IMT &amp; lihat riwayat</small>
+                            </div>
+                            <i data-lucide="chevron-right" class="pr-btn-chevron" style="color:var(--pr-primary);"></i>
+                        </a>
                         <form action="{{ route('logout') }}" method="POST" class="w-full">
                             @csrf
                             <button type="submit" class="pr-btn-logout">
@@ -432,6 +442,10 @@
     .pr-btn-logout:hover {
         background: #FFF1F2;
         border-color: #FECDD3;
+    }
+    .pr-btn-nutrition:hover {
+        background: rgba(27, 122, 62, 0.04);
+        border-color: rgba(27, 122, 62, 0.3);
     }
     .pr-btn-logout-icon {
         width: 44px;

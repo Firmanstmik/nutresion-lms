@@ -25,6 +25,8 @@ class User extends Authenticatable
         'password',
         'school_id',
         'role',
+        'birth_date',
+        'sex',
     ];
 
     public function school()
@@ -40,6 +42,16 @@ class User extends Authenticatable
     public function results()
     {
         return $this->hasMany(Result::class);
+    }
+
+    public function nutritionMeasurements()
+    {
+        return $this->hasMany(NutritionMeasurement::class);
+    }
+
+    public function hasNutritionProfile(): bool
+    {
+        return $this->birth_date !== null && in_array($this->sex, ['male', 'female'], true);
     }
 
     public function isAdmin()
@@ -72,6 +84,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'birth_date' => 'date',
         ];
     }
 }

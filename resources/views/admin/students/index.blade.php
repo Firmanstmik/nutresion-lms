@@ -978,6 +978,11 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                                title="Aktivitas">
                                 <i class="fas fa-chart-line"></i>
                             </a>
+                            <a href="{{ route('admin.students.nutrition', $student->id) }}"
+                               class="sp-action-btn sp-action-activity"
+                               title="Status Gizi" aria-label="Status Gizi">
+                                <i class="fas fa-heart-pulse"></i>
+                            </a>
                             <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST"
                                   onsubmit="return confirm('Apakah Anda yakin ingin menghapus siswa ini?')"
                                   style="display:contents">
@@ -1042,6 +1047,10 @@ tr:hover .sp-school-name { color: var(--s-ink); }
                     <a href="{{ route('admin.students.activity', $student->id) }}"
                        class="sp-card-btn sp-card-btn-activity">
                         <i class="fas fa-chart-line"></i>
+                    </a>
+                    <a href="{{ route('admin.students.nutrition', $student->id) }}"
+                       class="sp-card-btn sp-card-btn-activity" aria-label="Status Gizi">
+                        <i class="fas fa-heart-pulse"></i>
                     </a>
                     <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST"
                           onsubmit="return confirm('Apakah Anda yakin ingin menghapus siswa ini?')"

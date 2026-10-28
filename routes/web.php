@@ -6,6 +6,7 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NutritionController;
 use App\Http\Controllers\PreTestController;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +76,12 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     Route::get('/results', [TestController::class, 'myResults'])->name('results.index');
     Route::view('/profile', 'student.profile')->name('profile');
 
+    // Nutrition status (IMT/U)
+    Route::get('/nutrition', [NutritionController::class, 'index'])->name('nutrition.index');
+    Route::post('/nutrition/profile', [NutritionController::class, 'updateProfile'])->name('nutrition.profile');
+    Route::post('/nutrition', [NutritionController::class, 'store'])->name('nutrition.store');
+    Route::get('/nutrition/{id}', [NutritionController::class, 'show'])->whereNumber('id')->name('nutrition.show');
+
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
@@ -103,6 +110,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/students/{id}/activity/reset-pretest/{course_id}', [AdminController::class, 'resetStudentPreTest'])->name('students.activity.reset-pretest');
     Route::post('/students/{id}/activity/reset-posttest/{course_id}', [AdminController::class, 'resetStudentPostTest'])->name('students.activity.reset-posttest');
     Route::post('/students/{id}/activity/reset-lesson/{lesson_id}', [AdminController::class, 'resetStudentActivityLesson'])->name('students.activity.reset-lesson');
+    Route::get('/students/{id}/nutrition', [NutritionController::class, 'adminIndex'])->name('students.nutrition');
+    Route::post('/students/{id}/nutrition/profile', [NutritionController::class, 'adminUpdateProfile'])->name('students.nutrition.profile');
+    Route::post('/students/{id}/nutrition', [NutritionController::class, 'adminStore'])->name('students.nutrition.store');
 
     // Course Management
     Route::get('/courses', [AdminController::class, 'courses'])->name('courses.index');

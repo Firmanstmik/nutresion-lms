@@ -590,6 +590,13 @@
             text-transform: uppercase;
         }
         @media (min-width: 640px) { .nrn-user-name-mobile { display: none; } }
+        /* Tablet / small laptop: compact the bar so all links fit without horizontal scroll */
+        @media (min-width: 768px) and (max-width: 1199px) {
+            .nrn-bar-inner { padding: 0 1.25rem; gap: 1rem; }
+            .nrn-logo-wordmark { display: none; }
+            .nrn-link { padding: 0.45rem 0.6rem; }
+            .nrn-user-btn .nrn-user-name { display: none; } /* beats Tailwind md:block */
+        }
         .nrn-user-chevron {
             width: 12px;
             height: 12px;
@@ -1010,6 +1017,10 @@
                    class="nrn-link {{ request()->routeIs('results.*') ? 'nrn-active-student' : '' }}">
                     Nilai
                 </a>
+                <a href="{{ route('nutrition.index') }}"
+                   class="nrn-link {{ request()->routeIs('nutrition.*') ? 'nrn-active-student' : '' }}">
+                    Status Gizi
+                </a>
                 <a href="{{ route('notifications.index') }}"
                    class="nrn-link {{ request()->routeIs('notifications.*') ? 'nrn-active-student' : '' }}"
                    style="position:relative;">
@@ -1208,6 +1219,9 @@
                         <a href="{{ route('results.index') }}" class="nrn-user-dd-link">
                             Nilai <span>&rarr;</span>
                         </a>
+                        <a href="{{ route('nutrition.index') }}" class="nrn-user-dd-link">
+                            Status Gizi <span>&rarr;</span>
+                        </a>
                         @else
                         <a href="{{ route('admin.dashboard') }}" class="nrn-user-dd-link">
                             Admin Panel <span>&rarr;</span>
@@ -1360,6 +1374,11 @@
      SCRIPTS — Turbo + NProgress + UI Logic
 ════════════════════════════════════════════════════ --}}
 <script>
+// Turbo re-executes body scripts on every visit: bind global listeners once only.
+// (Block scope also keeps `const nrnSetupUI` from being redeclared.)
+if (!window.__nrnLayoutBooted) {
+window.__nrnLayoutBooted = true;
+
 // NProgress configuration
 if (typeof NProgress !== 'undefined') {
     NProgress.configure({ 
@@ -1479,6 +1498,7 @@ const nrnSetupUI = () => {
 
 document.addEventListener('turbo:load', nrnSetupUI);
 document.addEventListener('DOMContentLoaded', nrnSetupUI);
+}
 </script>
 
 @yield('scripts')

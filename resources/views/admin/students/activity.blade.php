@@ -19,15 +19,22 @@
             </div>
         </div>
 
-        <form action="{{ route('admin.students.activity.reset-all', $student->id) }}" method="POST"
-              onsubmit="return confirm('Reset semua aktivitas siswa ini? Ini akan menghapus progres bab dan semua hasil test (pre/post).')">
-            @csrf
-            <button type="submit"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-sm bg-red-600 text-white text-xs font-extrabold tracking-widest uppercase hover:bg-red-700">
-                <i class="fas fa-rotate-left"></i>
-                Reset Semua Aktivitas
-            </button>
-        </form>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <a href="{{ route('admin.students.nutrition', $student->id) }}"
+               class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-sm border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-extrabold tracking-widest uppercase hover:bg-emerald-100">
+                <i class="fas fa-heart-pulse"></i>
+                Status Gizi
+            </a>
+            <form action="{{ route('admin.students.activity.reset-all', $student->id) }}" method="POST"
+                  onsubmit="return confirm('Reset semua aktivitas siswa ini? Ini akan menghapus progres bab dan semua hasil test (pre/post).')">
+                @csrf
+                <button type="submit"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-sm bg-red-600 text-white text-xs font-extrabold tracking-widest uppercase hover:bg-red-700">
+                    <i class="fas fa-rotate-left"></i>
+                    Reset Semua Aktivitas
+                </button>
+            </form>
+        </div>
     </div>
 
     @if(session('success'))
